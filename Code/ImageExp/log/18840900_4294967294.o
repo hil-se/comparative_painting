@@ -1,0 +1,50 @@
+Iteration: 1 / 3
+Generating data...
+
+Generating training data...
+Generating testing data...
+Done.
+Training data size: 26400
+Testing data size: 6600
+Training data size: 13200
+Testing data size: 3300
+Data generated.
+Training...
+Finished training.
+Testing...
+0.8428571428571429 0.8473967684021544 0.8451208594449419 0.8427272727272728
+Iteration: 2 / 3
+Generating data...
+
+Generating training data...
+Generating testing data...
+Done.
+Training data size: 26400
+Testing data size: 6600
+Training data size: 13200
+Testing data size: 3300
+Data generated.
+Training...
+Finished training.
+Testing...
+0.8405172413793104 0.8343520782396088 0.8374233128834356 0.8393939393939394
+Iteration: 3 / 3
+Generating data...
+
+Generating training data...
+Generating testing data...
+Done.
+Training data size: 26400
+Testing data size: 6600
+Training data size: 13200
+Testing data size: 3300
+Data generated.
+Training...
+Finished training.
+Testing...
+0.8332318928788801 0.8291944276196245 0.8312082574377656 0.8315151515151515
+
+*******************************************
+FaceImage
+*******************************************
+
