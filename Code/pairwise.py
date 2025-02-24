@@ -26,7 +26,7 @@ objective_predictors = ["HueSD", "SaturationSD", "Brightness", "BrightnessSD",
 target = "Liking_M"  # Using Liking_M as the preference measure
 
 pairwise_data = []
-num_pairs = 4  # Start with n * (1)
+num_pairs = 5  # Start with n * (1)
 for idx1, row1 in data.iterrows():
     sampled_rows = data.sample(n=num_pairs, replace=False, random_state=42)  # Sample fewer comparisons per row
     for _, row2 in sampled_rows.iterrows():
@@ -102,7 +102,7 @@ model.compile(optimizer=SGD(learning_rate=0.005, momentum=0.98, nesterov=True), 
 early_stopping = EarlyStopping(monitor='val_loss', patience=15, restore_best_weights=True, verbose=1)
 
 # Train the model with increased batch size
-history = model.fit([X1_train, X2_train], y_train, epochs=200, batch_size=128, validation_data=([X1_test, X2_test], y_test), 
+history = model.fit([X1_train, X2_train], y_train, epochs=200, batch_size=64, validation_data=([X1_test, X2_test], y_test), 
                     verbose=1, callbacks=[early_stopping])
 
 # Evaluate the model
