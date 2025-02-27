@@ -12,7 +12,7 @@ from tensorflow.keras.regularizers import l2
 from tensorflow.keras.callbacks import EarlyStopping
 
 # Load dataset
-data = pd.read_csv("Data/PaintingDataMeans1.csv")
+data = pd.read_csv("Data/Representational_Data.csv")
 
 # Filter only representational paintings
 data = data[data["Representational"] == 1].copy()

@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from itertools import permutations
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score, roc_auc_score, mean_absolute_error, mean_squared_error
+from sklearn.metrics import accuracy_score, roc_auc_score, mean_absolute_error, mean_squared_error, r2_score
 from scipy.stats import pearsonr, spearmanr
 from sklearn.preprocessing import StandardScaler
 import tensorflow as tf
@@ -13,10 +13,10 @@ from tensorflow.keras.regularizers import l2
 from tensorflow.keras.callbacks import EarlyStopping, LearningRateScheduler
 
 # Load dataset
-data = pd.read_csv("Data/PaintingDataMeans1.csv")
+data = pd.read_csv("Data/Abstract_Data.csv")
 
 # Filter only representational paintings
-data = data[data["Representational"] == 1].copy()
+data = data[data["Representational"] == 0].copy()
 
 # Define predictors and target variable
 objective_predictors = ["HueSD", "SaturationSD", "Brightness", "BrightnessSD", 
@@ -110,6 +110,8 @@ test_loss = model.evaluate([X1_test, X2_test], y_test, verbose=0)
 y_pred_proba = model.predict([X1_test, X2_test]).flatten()
 y_pred = np.sign(y_pred_proba)  # Convert to -1 or 1
 roc_auc = roc_auc_score(y_test, y_pred_proba)
+r2 = r2_score(y_test, y_pred_proba)
+adj_r2 = 1 - ((1 - r2) * (len(y_test) - 1) / (len(y_test) - X1.shape[1] - 1))
 
 # Calculate additional metrics
 mae = mean_absolute_error(y_test, y_pred_proba)
@@ -122,3 +124,5 @@ print(f"Mean Absolute Error (MAE): {mae:.4f}")
 print(f"Mean Squared Error (MSE): {mse:.4f}")
 print(f"Pearson Correlation: {pearson_corr:.4f}")
 print(f"Spearman Correlation: {spearman_corr:.4f}")
+print(f"r2: {r2:.4f}")
+print(f"adj_r2: {adj_r2:.4f}")
