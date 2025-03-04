@@ -23,6 +23,9 @@ objective_predictors = ["HueSD", "SaturationSD", "Brightness", "BrightnessSD",
                         "ColourComponent", "Entropy", "StraightEdgeDensity", "NonStraightEdgeDensity",
                         "Horizontal_Symmetry", "Vertical_Symmetry"]
 
+data.replace(["#NULL!", np.inf, -np.inf], np.nan, inplace=True)
+data.dropna(inplace=True)
+
 target = "Liking_M"  # Using Liking_M as the preference measure
 
 pairwise_data = []
