@@ -13,10 +13,10 @@ from scipy.stats import pearsonr, spearmanr
 import matplotlib.pyplot as plt
 
 # Load dataset
-data = pd.read_csv("Data/Abstract_Data.csv")
+data = pd.read_csv("Data/Representational_Data.csv")
 
 # Filter only representational paintings
-data = data[data["Representational"] == 0].copy()
+data = data[data["Representational"] == 1].copy()
 
 # Define predictors and target variable
 objective_predictors = ["HueSD", "SaturationSD", "Brightness", "BrightnessSD", 
@@ -34,18 +34,17 @@ X = data[objective_predictors].values
 y = data[target].values.astype(float)
 X = scaler.fit_transform(X)
 
-# Data Augmentation
-noise_factor = 0.05
-X_augmented = np.concatenate([X, X + noise_factor * np.random.randn(*X.shape)])
-y_augmented = np.concatenate([y, y + noise_factor * np.std(y) * np.random.randn(*y.shape)])
+# Duplicate data instead of augmentation
+X_duplicated = np.tile(X, (2, 1))
+y_duplicated = np.tile(y, 2)
 
-# Save augmented dataset to CSV
-augmented_data = pd.DataFrame(X_augmented, columns=objective_predictors)
-augmented_data[target] = y_augmented
-augmented_data.to_csv("Data/Augmented_Abstract_Data.csv", index=False)
+# Save duplicated dataset to CSV
+duplicated_data = pd.DataFrame(X_duplicated, columns=objective_predictors)
+duplicated_data[target] = y_duplicated
+#duplicated_data.to_csv("Data/Duplicated_Abstract_Data.csv", index=False)
 
 # Split into train and test sets
-X_train, X_test, y_train, y_test = train_test_split(X_augmented, y_augmented, test_size=0.2, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(X_duplicated, y_duplicated, test_size=0.2, random_state=42)
 
 def build_encoder(input_shape):
     inputs = Input(shape=(input_shape,))
@@ -78,9 +77,9 @@ output = Dense(1, activation='linear')(encoded_data)
 regression_model = Model(inputs=input_data, outputs=output)
 regression_model.compile(optimizer=SGD(learning_rate=0.005, momentum=0.98, nesterov=True), loss='mse', metrics=['mae'])
 
-#early_stopping = EarlyStopping(monitor='val_loss', patience=150, restore_best_weights=True, verbose=1)
+early_stopping = EarlyStopping(monitor='val_loss', patience=150, restore_best_weights=True, verbose=1)
 
-history = regression_model.fit(X_train, y_train, epochs=500, batch_size=64, validation_data=(X_test, y_test), verbose=1)
+history = regression_model.fit(X_train, y_train, epochs=500, batch_size=64, validation_data=(X_test, y_test), verbose=1, callbacks=[early_stopping])
 
 y_pred = regression_model.predict(X_test).flatten()
 
@@ -92,13 +91,13 @@ pearson_corr, _ = pearsonr(y_test, y_pred)
 spearman_corr, _ = spearmanr(y_test, y_pred)
 
 results = pd.DataFrame({
-    "Metric": ["Adjusted R2 Score", "Mean Absolute Error", "Mean Squared Error", "Pearson Correlation", "Spearman Correlation"],
-    "Value": [adj_r2, mae, mse, pearson_corr, spearman_corr]
+    "Metric": ["R2 Score", "Adjusted R2 Score", "Mean Absolute Error", "Mean Squared Error", "Pearson Correlation", "Spearman Correlation"],
+    "Value": [r2, adj_r2, mae, mse, pearson_corr, spearman_corr]
 })
 
-results.to_csv("Results/Abstract/regression_results/avg_ratings.csv", index=False)
+results.to_csv("Results/Representational/regression_results/avg_ratings.csv", index=False)
 
-print("Model evaluation results saved to csv")
+print("Model evaluation results saved to Results/Representational/regression_results/avg_ratings.csv")
 
 # Plot results
 plt.figure(figsize=(10, 5))
