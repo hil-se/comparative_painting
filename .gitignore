@@ -3,3 +3,5 @@ Code/basepaper_model.py
 Results/vif_values.csv
 Results/regression_summary.txt
 miscellaneous/
+**/model_summary.txt
+*.pyc

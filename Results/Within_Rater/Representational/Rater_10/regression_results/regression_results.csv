@@ -1,0 +1,7 @@
+Metric,Value
+R2 Score,0.07418443881963377
+Adjusted R2 Score,-0.17603598312100588
+Mean Absolute Error,0.8153299391269684
+Mean Squared Error,1.0700724129441472
+Pearson Correlation,0.31793361355550104
+Spearman Correlation,0.2743192867580512
