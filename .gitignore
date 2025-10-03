@@ -2,6 +2,8 @@ Transformation/
 Code/basepaper_model.py
 Results/vif_values.csv
 Results/regression_summary.txt
-Miscilleneous/
 **/model_summary.txt
 *.pyc
+Miscilleneous
+Code_1
+Data_1
