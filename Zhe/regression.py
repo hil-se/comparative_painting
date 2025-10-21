@@ -111,7 +111,7 @@ def cross(painting, type, rater, origin=True):
     train = np.random.choice(len(y), 140, replace=False)
     test = np.array(list(set(list(range(len(y))))-set(list(train))))
 
-    y_avg = y = np.array(rate["Average"])
+    y_avg = np.array(rate["Average"])
     num_rater = len(rate.columns)-1
     y_train = (y_avg * num_rater - y) / (num_rater-1)
 
@@ -167,5 +167,5 @@ if __name__ == '__main__':
     type = "liking"
     painting = "abstract"
     # result = within(painting, type, "3", origin=False)
-    result = cross(painting, type, "3", origin=False)
+    result = cross(painting, type, "1", origin=False)
     print(result)
