@@ -60,7 +60,8 @@ def within(painting, type, rater, origin=True):
 
     model = build_model((X[train].shape[1]))
 
-    checkpoint_path = "checkpoint/mlp.keras"
+    #checkpoint_path = "checkpoint/mlp.weights.h5"
+    checkpoint_path = "checkpoint/mlp.weights.h5"
     os.makedirs(os.path.dirname(checkpoint_path), exist_ok=True)
 
     reduce_lr = tf.keras.callbacks.ReduceLROnPlateau(monitor='loss', patience=100, factor=0.3, min_lr=1e-6, verbose=1)
@@ -111,13 +112,14 @@ def cross(painting, type, rater, origin=True):
     train = np.random.choice(len(y), 140, replace=False)
     test = np.array(list(set(list(range(len(y))))-set(list(train))))
 
-    y_avg = y = np.array(rate["Average"])
+    #y_avg = y = np.array(rate["Average"])
+    y_avg = np.array(rate["Average"])
     num_rater = len(rate.columns)-1
     y_train = (y_avg * num_rater - y) / (num_rater-1)
 
     model = build_model((X[train].shape[1]))
 
-    checkpoint_path = "checkpoint/mlp.keras"
+    checkpoint_path = "checkpoint/mlp.weights.h5"
     os.makedirs(os.path.dirname(checkpoint_path), exist_ok=True)
 
     reduce_lr = tf.keras.callbacks.ReduceLROnPlateau(monitor='loss', patience=100, factor=0.3, min_lr=1e-6, verbose=1)
@@ -164,7 +166,7 @@ if __name__ == '__main__':
     #         results.append(result)
     #     pd.DataFrame(results).to_csv("result/" + painting + "_" + type + "_within.csv", index=False)
 
-    type = "liking"
+    type = "beauty"
     painting = "abstract"
     # result = within(painting, type, "3", origin=False)
     result = cross(painting, type, "3", origin=False)
