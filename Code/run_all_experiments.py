@@ -2,217 +2,496 @@ import os
 import pandas as pd
 import numpy as np
 from tqdm import tqdm
-import shutil
 import multiprocessing
-import matplotlib.pyplot as plt
-import seaborn as sns
+from sklearn.model_selection import train_test_split
 
 # --- Main Imports ---
 import data_preprocessor_resnet50 as data_loader
-import regression_model
-import pairwise_resnet
-from regression_model import run_cross_rater_experiment
-from pairwise_resnet import run_cross_rater_pairwise_experiment
+from data_preprocessor_resnet50 import build_mlp_encoder, FEATURE_PREFIX
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import r2_score
+from scipy.stats import pearsonr, spearmanr
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import Dense, Subtract, Input
+from tensorflow.keras.callbacks import EarlyStopping
+from tensorflow.keras.optimizers import SGD
+from tensorflow.keras import backend as K
 
 # --- CONFIGURATION ---
-MAIN_RESULTS_DIR = "Final_Analysis_Results"
-
-# 1. CHOOSE THE EXPERIMENT MODE
-# Options: 'AVERAGE', 'WITHIN_RATER', 'CROSS_RATER'
-EXPERIMENT_MODE = 'AVERAGE' 
-
-# 2. CHOOSE WHICH MODELS TO RUN (NEW!)
-# Options: 'regression', 'pairwise', 'both'
-MODELS_TO_RUN = 'both'
-
-# 3. GENERAL SETTINGS
+RESULT_DIR = "Final_results"  # Same directory structure as first approach
 NUM_RUNS = 10
-RATERS_TO_RUN = range(1, 6)
+NUM_RATERS = 5  # Adjust based on your dataset
+PAIRS_PER_IMAGE_VALUES = range(1, 11)  # N values from 1 to 15
 NUM_WORKERS = max(1, os.cpu_count() - 1)
 
+# =================================================================================
+# ===== REGRESSION MODEL FUNCTIONS =====
+# =================================================================================
+
+def build_regression_model_from_encoder(encoder):
+    """Build regression model from encoder"""
+    output = Dense(1, activation='linear', name='reg_output')(encoder.output)
+    return Model(inputs=encoder.input, outputs=output)
+
+def run_regression_single(X_train, y_train, X_val, y_val, X_test, y_test, input_dim):
+    """Train and evaluate regression model for a single run"""
+    encoder = build_mlp_encoder(input_dim)
+    model = build_regression_model_from_encoder(encoder)
+    
+    optimizer = SGD(learning_rate=0.005, momentum=0.9)
+    model.compile(optimizer=optimizer, loss='mse', metrics=['mae'])
+    
+    early_stopping = EarlyStopping(monitor='val_loss', patience=50, restore_best_weights=True, verbose=0)
+    
+    model.fit(X_train, y_train, epochs=300, batch_size=32,
+              validation_data=(X_val, y_val), verbose=0, callbacks=[early_stopping])
+    
+    y_pred = model.predict(X_test, verbose=0).flatten()
+    
+    # Calculate metrics
+    mae = np.mean(np.abs(y_test - y_pred))
+    r2 = r2_score(y_test, y_pred)
+    rho = pearsonr(y_test, y_pred)[0]
+    rs = spearmanr(y_test, y_pred)[0]
+    
+    K.clear_session()
+    del model, encoder
+    
+    return {"mae": mae, "r2": r2, "rho": rho, "rs": rs}
+
+# =================================================================================
+# ===== PAIRWISE MODEL FUNCTIONS =====
+# =================================================================================
+
+def make_pairs_from_rows(rows_df, target_col, pairs_per_image, seed=None):
+    """Generate pairwise comparisons from rows"""
+    rng = np.random.default_rng(seed)
+    rows = rows_df.reset_index(drop=True)
+    pairs = []
+    n_rows = len(rows)
+    if n_rows <= 1:
+        return pd.DataFrame()
+    
+    all_opponents = {i: rng.permutation([j for j in range(n_rows) if j != i]) for i in range(n_rows)}
+    
+    for i, r1 in rows.iterrows():
+        chosen_opponents = all_opponents[i][:pairs_per_image]
+        for j in chosen_opponents:
+            preference = 1 if r1[target_col] > rows.loc[j, target_col] else -1
+            pairs.append({'idx1': int(i), 'idx2': int(j), 'preference': int(preference)})
+    
+    return pd.DataFrame(pairs)
+
+def build_siamese_on_features(input_dim):
+    """Build siamese network for pairwise learning"""
+    encoder = build_mlp_encoder(input_dim)
+    input_A, input_B = Input(shape=(input_dim,)), Input(shape=(input_dim,))
+    encoded_A, encoded_B = encoder(input_A), encoder(input_B)
+    diff = Subtract()([encoded_A, encoded_B])
+    output = Dense(1, activation='tanh', name='preference')(diff)
+    return Model(inputs=[input_A, input_B], outputs=output)
+
+def build_inputs_from_pairs(pair_df, features_matrix):
+    """Build input arrays from pair dataframe"""
+    A = features_matrix[pair_df['idx1'].values]
+    B = features_matrix[pair_df['idx2'].values]
+    y = pair_df['preference'].values.astype(np.float32)
+    return [A, B], y
+
+def run_pairwise_single(train_rows, train_pairs, val_rows, val_pairs, test_rows, test_pairs, 
+                       feature_cols, target_col, pairs_per_image):
+    """Train and evaluate pairwise model for a single run"""
+    X_train_feats = train_rows[feature_cols].values
+    X_val_feats = val_rows[feature_cols].values
+    X_test_feats = test_rows[feature_cols].values
+    
+    train_X, train_y = build_inputs_from_pairs(train_pairs, X_train_feats)
+    val_X, val_y = build_inputs_from_pairs(val_pairs, X_val_feats)
+    test_X, test_y = build_inputs_from_pairs(test_pairs, X_test_feats)
+    
+    model = build_siamese_on_features(X_train_feats.shape[1])
+    model.compile(optimizer=SGD(learning_rate=0.005, momentum=0.9), loss='hinge', metrics=['mae'])
+    
+    early_stopping = EarlyStopping(monitor='val_loss', patience=15, restore_best_weights=True, verbose=0)
+    model.fit(train_X, train_y, epochs=100, batch_size=32, 
+              validation_data=(val_X, val_y), callbacks=[early_stopping], verbose=0)
+    
+    y_pred_proba = model.predict(test_X, verbose=0).flatten()
+    y_true = test_y.astype(float)
+    
+    # Calculate correlations on preference predictions
+    rho = pearsonr(y_true, y_pred_proba)[0]
+    rs = spearmanr(y_true, y_pred_proba)[0]
+    
+    K.clear_session()
+    del model
+    
+    return {"rho": rho, "rs": rs}
 
 # =================================================================================
 # ===== WORKER FUNCTIONS FOR MULTIPROCESSING =====
 # =================================================================================
+
 def regression_worker(args):
-    run_dir, preloaded_df = args
-    regression_model.main(output_dir=run_dir, preloaded_df=preloaded_df)
-    return True
+    """Worker for regression experiments"""
+    run_id, X, y, feature_cols, seed = args
+    
+    # Split data
+    X_temp, X_test, y_temp, y_test = train_test_split(X, y, test_size=0.2, random_state=seed)
+    X_train, X_val, y_train, y_val = train_test_split(X_temp, y_temp, test_size=0.25, random_state=seed)
+    
+    # Standardize
+    scaler = StandardScaler()
+    X_train_scaled = scaler.fit_transform(X_train)
+    X_val_scaled = scaler.transform(X_val)
+    X_test_scaled = scaler.transform(X_test)
+    
+    result = run_regression_single(X_train_scaled, y_train, X_val_scaled, y_val, 
+                                   X_test_scaled, y_test, X_train_scaled.shape[1])
+    result['Run'] = run_id
+    return result
+
 def pairwise_worker(args):
-    run_dir, n_value, preloaded_df = args
-    pairwise_resnet.main(output_dir=run_dir, specific_n=n_value, preloaded_df=preloaded_df)
-    return True
-def cross_regression_worker(args):
-    run_num, train_df, test_df, target, f_cols, cond_name = args
-    result = run_cross_rater_experiment(train_df, test_df, target, f_cols, cond_name)
-    if result: result['Run'] = run_num
-    return result
-def cross_pairwise_worker(args):
-    run_num, n_value, train_df, test_df, target, f_cols, cond_name = args
-    result = run_cross_rater_pairwise_experiment(train_df, test_df, target, n_value, f_cols, cond_name)
-    if result: result['Run'] = run_num
+    """Worker for pairwise experiments"""
+    run_id, df, target_col, feature_cols, pairs_per_image, seed = args
+    
+    # Split paintings
+    train_val, test = train_test_split(df, test_size=0.2, random_state=seed)
+    train, val = train_test_split(train_val, test_size=0.25, random_state=seed)
+    
+    train = train.reset_index(drop=True)
+    val = val.reset_index(drop=True)
+    test = test.reset_index(drop=True)
+    
+    # Create pairs
+    train_pairs = make_pairs_from_rows(train, target_col, pairs_per_image, seed)
+    val_pairs = make_pairs_from_rows(val, target_col, pairs_per_image, seed)
+    test_pairs = make_pairs_from_rows(test, target_col, pairs_per_image, seed)
+    
+    if train_pairs.empty or test_pairs.empty:
+        return None
+    
+    result = run_pairwise_single(train, train_pairs, val, val_pairs, test, test_pairs,
+                                feature_cols, target_col, pairs_per_image)
+    result['Run'] = run_id
+    result['N'] = pairs_per_image
     return result
 
 # =================================================================================
-# ===== PLOTTING FUNCTION (CORRECTED) =====
+# ===== EXPERIMENT ORCHESTRATION FUNCTIONS =====
 # =================================================================================
 
-def plot_results(base_dir, title_prefix=""):
-    print(f"\n--- Generating plots for: {title_prefix or 'Average Rater'} ---")
-    reg_path = os.path.join(base_dir, "aggregated_regression_results.csv")
-    pair_path = os.path.join(base_dir, "raw_pairwise_results.csv")
-
-    plot_reg = os.path.exists(reg_path)
-    plot_pair = os.path.exists(pair_path)
-
-    if not plot_reg and not plot_pair:
-        print(f"SKIPPING PLOTS: No result CSVs found in '{base_dir}'.")
+def run_average_experiments(df, painting_type, rating_type):
+    """Run average rating experiments (regression + pairwise)"""
+    print(f"\n{'='*70}")
+    print(f"Running Average Experiments: {painting_type} - {rating_type}")
+    print(f"{'='*70}")
+    
+    feature_cols = [c for c in df.columns if c.startswith(FEATURE_PREFIX)]
+    target_col = 'Beauty' if rating_type == 'beauty' else 'Liking'
+    
+    # Filter data
+    rep_code = 1 if painting_type == 'representational' else 0
+    df_filtered = df[(df['Representational'] == rep_code) & (df[target_col].notna())].reset_index(drop=True)
+    
+    if len(df_filtered) < 20:
+        print(f"Insufficient data for {painting_type} - {rating_type}")
         return
-
-    plot_dir = os.path.join(base_dir, "comparison_plots")
-    os.makedirs(plot_dir, exist_ok=True)
-    sns.set_theme(style="whitegrid")
     
-    reg_df = pd.read_csv(reg_path) if plot_reg else pd.DataFrame()
-    pair_df_raw = pd.read_csv(pair_path) if plot_pair else pd.DataFrame()
+    X = df_filtered[feature_cols].values
+    y = df_filtered[target_col].values.astype(float)
     
-    # Build the list of conditions intelligently based on available data
-    condition_series = []
-    if plot_reg:
-        condition_series.append(reg_df['Condition'])
-    if plot_pair:
-        condition_series.append(pair_df_raw['Condition'])
-    conditions = pd.concat(condition_series).unique()
+    # ===== REGRESSION =====
+    print(f"\nRunning regression experiments (10 runs)...")
+    reg_tasks = [(i, X, y, feature_cols, i) for i in range(NUM_RUNS)]
+    
+    with multiprocessing.Pool(processes=NUM_WORKERS) as pool:
+        reg_results = list(tqdm(pool.imap(regression_worker, reg_tasks), total=len(reg_tasks), desc="Regression"))
+    
+    # Average and save
+    reg_df = pd.DataFrame(reg_results)
+    reg_avg = reg_df[['mae', 'r2', 'rho', 'rs']].mean().to_dict()
+    
+    output_file = os.path.join(RESULT_DIR, f"{painting_type}_{rating_type}_average.csv")
+    pd.DataFrame([reg_avg]).to_csv(output_file, index=False)
+    print(f"✓ Saved: {output_file}")
+    
+    # ===== PAIRWISE =====
+    print(f"\nRunning pairwise experiments (10 runs × 15 N values)...")
+    pair_tasks = [(i, df_filtered, target_col, feature_cols, n, i) 
+                  for n in PAIRS_PER_IMAGE_VALUES 
+                  for i in range(NUM_RUNS)]
+    
+    with multiprocessing.Pool(processes=NUM_WORKERS) as pool:
+        pair_results = [r for r in tqdm(pool.imap(pairwise_worker, pair_tasks), 
+                                       total=len(pair_tasks), desc="Pairwise") if r is not None]
+    
+    # Average by N and save
+    pair_df = pd.DataFrame(pair_results)
+    pair_avg = pair_df.groupby('N')[['rho', 'rs']].mean().reset_index()
+    
+    output_file = os.path.join(RESULT_DIR, f"{painting_type}_{rating_type}_average_comparative.csv")
+    pair_avg.to_csv(output_file, index=False)
+    print(f"✓ Saved: {output_file}")
 
-    for condition in conditions:
-        plt.figure(figsize=(10, 6.5))
-        ax = plt.gca()
+def run_within_rater_experiments(painting_type, rating_type):
+    """Run within-rater experiments (regression + pairwise) for each rater"""
+    print(f"\n{'='*70}")
+    print(f"Running Within-Rater Experiments: {painting_type} - {rating_type}")
+    print(f"{'='*70}")
+    
+    all_reg_results = []
+    all_pair_results = []
+    
+    for rater in range(1, NUM_RATERS + 1):
+        print(f"\n--- Processing Rater {rater}/{NUM_RATERS} ---")
         
-        if plot_pair:
-            pair_df_raw_cond = pair_df_raw[pair_df_raw['Condition'] == condition]
-            pair_df_raw_cond = pair_df_raw_cond.rename(columns={'Pearson_Corr': 'Pearson Correlation', 'Spearman_Corr': 'Spearman Correlation'})
-            sns.lineplot(data=pair_df_raw_cond, x='n', y='Pearson Correlation', marker='o', label='Pairwise Pearson', ax=ax, errorbar='ci')
-            sns.lineplot(data=pair_df_raw_cond, x='n', y='Spearman Correlation', marker='s', label='Pairwise Spearman', ax=ax, errorbar='ci')
-
-        if plot_reg:
-            reg_cond_df = reg_df[reg_df['Condition'] == condition]
-            if not reg_cond_df.empty:
-                ax.axhline(y=reg_cond_df['Pearson Correlation'].iloc[0], ls='--', color='blue', label='Regression Pearson Baseline')
-                ax.axhline(y=reg_cond_df['Spearman Correlation'].iloc[0], ls='--', color='orange', label='Regression Spearman Baseline')
+        # Load rater-specific data
+        df = data_loader.load_and_preprocess_data(rater_id=rater)
+        if df.empty:
+            print(f"No data for rater {rater}, skipping...")
+            continue
         
-        ax.set_title(f"{title_prefix}{condition}", fontsize=16, pad=15)
-        ax.set_xlabel("n (Pairs per Image)", fontsize=12)
-        ax.set_ylabel("Correlation", fontsize=12)
-        ax.set_ylim(bottom=0)
-        ax.legend()
-        plt.tight_layout()
-        plt.savefig(os.path.join(plot_dir, f"comparison_{condition}.png"), dpi=150)
-        plt.close()
+        feature_cols = [c for c in df.columns if c.startswith(FEATURE_PREFIX)]
+        target_col = 'Beauty' if rating_type == 'beauty' else 'Liking'
+        
+        # Filter data
+        rep_code = 1 if painting_type == 'representational' else 0
+        df_filtered = df[(df['Representational'] == rep_code) & (df[target_col].notna())].reset_index(drop=True)
+        
+        if len(df_filtered) < 20:
+            print(f"Insufficient data for rater {rater}")
+            continue
+        
+        X = df_filtered[feature_cols].values
+        y = df_filtered[target_col].values.astype(float)
+        
+        # ===== REGRESSION =====
+        print(f"  Running regression (10 runs)...")
+        reg_tasks = [(i, X, y, feature_cols, i + rater*1000) for i in range(NUM_RUNS)]
+        
+        with multiprocessing.Pool(processes=NUM_WORKERS) as pool:
+            reg_results = list(pool.imap(regression_worker, reg_tasks))
+        
+        # Average for this rater
+        reg_df = pd.DataFrame(reg_results)
+        reg_avg = reg_df[['mae', 'r2', 'rho', 'rs']].mean().to_dict()
+        reg_avg['Rater'] = rater
+        all_reg_results.append(reg_avg)
+        
+        # ===== PAIRWISE =====
+        print(f"  Running pairwise (10 runs × 15 N values)...")
+        pair_tasks = [(i, df_filtered, target_col, feature_cols, n, i + rater*1000) 
+                      for n in PAIRS_PER_IMAGE_VALUES 
+                      for i in range(NUM_RUNS)]
+        
+        with multiprocessing.Pool(processes=NUM_WORKERS) as pool:
+            pair_results = [r for r in pool.imap(pairwise_worker, pair_tasks) if r is not None]
+        
+        # Average by N for this rater
+        pair_df = pd.DataFrame(pair_results)
+        pair_avg = pair_df.groupby('N')[['rho', 'rs']].mean().reset_index()
+        pair_avg['Rater'] = rater
+        all_pair_results.append(pair_avg)
     
-    print(f"✅ Plots saved to: {plot_dir}")
+    # Save all raters
+    if all_reg_results:
+        reg_output = pd.DataFrame(all_reg_results)
+        reg_output = reg_output[['Rater', 'mae', 'r2', 'rho', 'rs']]
+        output_file = os.path.join(RESULT_DIR, f"{painting_type}_{rating_type}_within.csv")
+        reg_output.to_csv(output_file, index=False)
+        print(f"\n✓ Saved: {output_file}")
+    
+    if all_pair_results:
+        pair_output = pd.concat(all_pair_results, ignore_index=True)
+        pair_output = pair_output[['Rater', 'N', 'rho', 'rs']]
+        output_file = os.path.join(RESULT_DIR, f"{painting_type}_{rating_type}_within_comparative.csv")
+        pair_output.to_csv(output_file, index=False)
+        print(f"✓ Saved: {output_file}")
 
-# =================================================================================
-# ===== EXPERIMENT RUNNER & AGGREGATION FUNCTIONS =====
-# =================================================================================
-
-def run_standard_experiments(base_dir, models_to_run, preloaded_df=None):
-    if models_to_run in ['regression', 'both']:
-        reg_base_dir = os.path.join(base_dir, "regression")
-        tasks = [(os.path.join(reg_base_dir, f"run_{i}"), preloaded_df) for i in range(NUM_RUNS)]
-        with multiprocessing.Pool(processes=NUM_WORKERS) as pool:
-            list(tqdm(pool.imap_unordered(regression_worker, tasks), total=len(tasks), desc="Regression Runs"))
-
-    if models_to_run in ['pairwise', 'both']:
-        pair_base_dir = os.path.join(base_dir, "pairwise")
-        tasks = [(os.path.join(pair_base_dir, f"n_{n}", f"run_{i}"), n, preloaded_df) for n in range(1, 16) for i in range(NUM_RUNS)]
-        with multiprocessing.Pool(processes=NUM_WORKERS) as pool:
-            list(tqdm(pool.imap_unordered(pairwise_worker, tasks), total=len(tasks), desc="Pairwise Runs"))
-
-def aggregate_standard_results(base_dir, models_to_run):
-    print("\n--- Aggregating Standard Results ---")
-    if models_to_run in ['regression', 'both']:
-        reg_base_dir = os.path.join(base_dir, "regression")
-        all_reg_dfs = [pd.read_csv(os.path.join(reg_base_dir, f"run_{i}", "regression_results.csv")) for i in range(NUM_RUNS) if os.path.exists(os.path.join(reg_base_dir, f"run_{i}", "regression_results.csv"))]
-        if all_reg_dfs:
-            df_reg_avg = pd.concat(all_reg_dfs).groupby(['Condition']).mean(numeric_only=True).reset_index()
-            df_reg_avg.to_csv(os.path.join(base_dir, "aggregated_regression_results.csv"), index=False)
-        if os.path.exists(reg_base_dir): shutil.rmtree(reg_base_dir)
-
-    if models_to_run in ['pairwise', 'both']:
-        pair_base_dir = os.path.join(base_dir, "pairwise")
-        all_pair_dfs = []
-        for n in range(1, 16):
-            for i in range(NUM_RUNS):
-                f_path = os.path.join(pair_base_dir, f"n_{n}", f"run_{i}", "pairwise_results.csv")
-                if os.path.exists(f_path):
-                    df = pd.read_csv(f_path); df['n'] = n; df['run'] = i; all_pair_dfs.append(df)
-        if all_pair_dfs:
-            pd.concat(all_pair_dfs).to_csv(os.path.join(base_dir, "raw_pairwise_results.csv"), index=False)
-        if os.path.exists(pair_base_dir): shutil.rmtree(pair_base_dir)
-    print("Cleaned up intermediate run directories.")
-
-def orchestrate_cross_rater_experiments(raters_to_process, models_to_run):
-    for test_rater_id in raters_to_process:
-        title = f"Cross-Rater (Test on Rater {test_rater_id})"
-        print(f"\n{'='*25} PROCESSING: {title.upper()} {'='*25}")
-        main_dir = os.path.join(MAIN_RESULTS_DIR, "Cross_Rater_Analysis", f"Rater_{test_rater_id}")
-        if os.path.exists(main_dir): shutil.rmtree(main_dir)
-        os.makedirs(main_dir, exist_ok=True)
-        train_df = data_loader.load_and_preprocess_data(exclude_rater_id=test_rater_id)
-        test_df = data_loader.load_and_preprocess_data(rater_id=test_rater_id)
+def run_cross_rater_experiments(painting_type, rating_type):
+    """Run cross-rater experiments (regression + pairwise) for each rater"""
+    print(f"\n{'='*70}")
+    print(f"Running Cross-Rater Experiments: {painting_type} - {rating_type}")
+    print(f"{'='*70}")
+    
+    all_reg_results = []
+    all_pair_results = []
+    
+    for rater in range(1, NUM_RATERS + 1):
+        print(f"\n--- Processing Rater {rater}/{NUM_RATERS} (Train on others, test on this rater) ---")
+        
+        # Load training data (exclude this rater)
+        train_df = data_loader.load_and_preprocess_data(exclude_rater_id=rater)
+        # Load test data (only this rater)
+        test_df = data_loader.load_and_preprocess_data(rater_id=rater)
+        
         if train_df.empty or test_df.empty:
-            print(f"Skipping rater {test_rater_id} due to empty dataset."); continue
-        feature_cols = [c for c in train_df.columns if c.startswith(data_loader.FEATURE_PREFIX)]
-        conditions = {'beauty_abstract': 'Beauty', 'liking_abstract': 'Liking', 'beauty_represent': 'Beauty', 'liking_represent': 'Liking'}
-        if models_to_run in ['regression', 'both']:
-            reg_tasks, all_reg_results = [], []
-            for name, target in conditions.items():
-                train_cond_df = train_df[(train_df['Representational'] == (1 if 'represent' in name else 0)) & (train_df[target].notna())]
-                test_cond_df = test_df[(test_df['Representational'] == (1 if 'represent' in name else 0)) & (test_df[target].notna())]
-                for i in range(NUM_RUNS):
-                    reg_tasks.append((i, train_cond_df, test_cond_df, target, feature_cols, name))
-            with multiprocessing.Pool(processes=NUM_WORKERS) as pool:
-                for result in tqdm(pool.imap_unordered(cross_regression_worker, reg_tasks), total=len(reg_tasks), desc="Cross-Reg Runs"):
-                    if result: all_reg_results.append(result)
-            if all_reg_results:
-                df_reg_avg = pd.DataFrame(all_reg_results).groupby(["Condition"]).mean(numeric_only=True).reset_index()
-                df_reg_avg.to_csv(os.path.join(main_dir, "aggregated_regression_results.csv"), index=False)
-        if models_to_run in ['pairwise', 'both']:
-            pair_tasks, all_pair_results = [], []
-            for name, target in conditions.items():
-                train_cond_df = train_df[(train_df['Representational'] == (1 if 'represent' in name else 0)) & (train_df[target].notna())]
-                test_cond_df = test_df[(test_df['Representational'] == (1 if 'represent' in name else 0)) & (test_df[target].notna())]
-                for n in range(1, 16):
-                    for i in range(NUM_RUNS):
-                        pair_tasks.append((i, n, train_cond_df, test_cond_df, target, feature_cols, name))
-            with multiprocessing.Pool(processes=NUM_WORKERS) as pool:
-                for result in tqdm(pool.imap_unordered(cross_pairwise_worker, pair_tasks), total=len(pair_tasks), desc="Cross-Pair Runs"):
-                    if result: all_pair_results.append(result)
-            if all_pair_results:
-                pd.concat([pd.DataFrame([res]) for res in all_pair_results]).to_csv(os.path.join(main_dir, "raw_pairwise_results.csv"), index=False)
-        plot_results(main_dir, title_prefix=f"Cross-Rater (Test on Rater {test_rater_id}): ")
+            print(f"Insufficient data for rater {rater}, skipping...")
+            continue
+        
+        feature_cols = [c for c in train_df.columns if c.startswith(FEATURE_PREFIX)]
+        target_col = 'Beauty' if rating_type == 'beauty' else 'Liking'
+        
+        # Filter data
+        rep_code = 1 if painting_type == 'representational' else 0
+        train_filtered = train_df[(train_df['Representational'] == rep_code) & (train_df[target_col].notna())].reset_index(drop=True)
+        test_filtered = test_df[(test_df['Representational'] == rep_code) & (test_df[target_col].notna())].reset_index(drop=True)
+        
+        if len(train_filtered) < 20 or len(test_filtered) < 10:
+            print(f"Insufficient data for rater {rater}")
+            continue
+        
+        # ===== REGRESSION =====
+        print(f"  Running regression (10 runs)...")
+        reg_results_rater = []
+        
+        for run_id in range(NUM_RUNS):
+            # Split train into train/val
+            X_train_full = train_filtered[feature_cols].values
+            y_train_full = train_filtered[target_col].values.astype(float)
+            X_test = test_filtered[feature_cols].values
+            y_test = test_filtered[target_col].values.astype(float)
+            
+            X_train, X_val, y_train, y_val = train_test_split(X_train_full, y_train_full, 
+                                                               test_size=0.2, random_state=run_id + rater*1000)
+            
+            # Standardize
+            scaler = StandardScaler()
+            X_train_scaled = scaler.fit_transform(X_train)
+            X_val_scaled = scaler.transform(X_val)
+            X_test_scaled = scaler.transform(X_test)
+            
+            result = run_regression_single(X_train_scaled, y_train, X_val_scaled, y_val,
+                                         X_test_scaled, y_test, X_train_scaled.shape[1])
+            reg_results_rater.append(result)
+        
+        # Average for this rater
+        reg_df = pd.DataFrame(reg_results_rater)
+        reg_avg = reg_df[['mae', 'r2', 'rho', 'rs']].mean().to_dict()
+        reg_avg['Rater'] = rater
+        all_reg_results.append(reg_avg)
+        
+        # ===== PAIRWISE =====
+        print(f"  Running pairwise (10 runs × 15 N values)...")
+        pair_results_rater = []
+        
+        for n in PAIRS_PER_IMAGE_VALUES:
+            for run_id in range(NUM_RUNS):
+                # Split train into train/val
+                train_temp, _ = train_test_split(train_filtered, test_size=0.2, random_state=run_id + rater*1000)
+                train_rows, val_rows = train_test_split(train_temp, test_size=0.25, random_state=run_id + rater*1000)
+                
+                train_rows = train_rows.reset_index(drop=True)
+                val_rows = val_rows.reset_index(drop=True)
+                test_rows = test_filtered.reset_index(drop=True)
+                
+                # Create pairs
+                train_pairs = make_pairs_from_rows(train_rows, target_col, n, run_id + rater*1000)
+                val_pairs = make_pairs_from_rows(val_rows, target_col, n, run_id + rater*1000)
+                test_pairs = make_pairs_from_rows(test_rows, target_col, n, run_id + rater*1000)
+                
+                if train_pairs.empty or test_pairs.empty:
+                    continue
+                
+                result = run_pairwise_single(train_rows, train_pairs, val_rows, val_pairs, 
+                                           test_rows, test_pairs, feature_cols, target_col, n)
+                result['N'] = n
+                pair_results_rater.append(result)
+        
+        # Average by N for this rater
+        if pair_results_rater:
+            pair_df = pd.DataFrame(pair_results_rater)
+            pair_avg = pair_df.groupby('N')[['rho', 'rs']].mean().reset_index()
+            pair_avg['Rater'] = rater
+            all_pair_results.append(pair_avg)
+    
+    # Save all raters
+    if all_reg_results:
+        reg_output = pd.DataFrame(all_reg_results)
+        reg_output = reg_output[['Rater', 'mae', 'r2', 'rho', 'rs']]
+        output_file = os.path.join(RESULT_DIR, f"{painting_type}_{rating_type}_cross.csv")
+        reg_output.to_csv(output_file, index=False)
+        print(f"\n✓ Saved: {output_file}")
+    
+    if all_pair_results:
+        pair_output = pd.concat(all_pair_results, ignore_index=True)
+        pair_output = pair_output[['Rater', 'N', 'rho', 'rs']]
+        output_file = os.path.join(RESULT_DIR, f"{painting_type}_{rating_type}_cross_comparative.csv")
+        pair_output.to_csv(output_file, index=False)
+        print(f"✓ Saved: {output_file}")
 
-# ===========================================================================
-# ===== MAIN EXECUTION BLOCK =====
-# ===========================================================================
+# =================================================================================
+# ===== MAIN EXECUTION =====
+# =================================================================================
+
+def main():
+    """Main execution function"""
+    # Configuration
+    PAINTING_TYPES = ["representational"]
+    RATING_TYPES = ["liking"]
+    
+    # Choose which experiments to run
+    RUN_AVERAGE = False
+    RUN_WITHIN = False
+    RUN_CROSS = True
+    
+    # Create result directory
+    os.makedirs(RESULT_DIR, exist_ok=True)
+    
+    # Suppress TensorFlow warnings
+    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+    import tensorflow as tf
+    tf.get_logger().setLevel('ERROR')
+    
+    print("\n" + "="*70)
+    print("STARTING EXPERIMENTS")
+    print("="*70)
+    print(f"Configuration:")
+    print(f"  - Result Directory: {RESULT_DIR}")
+    print(f"  - Number of Runs: {NUM_RUNS}")
+    print(f"  - Number of Workers: {NUM_WORKERS}")
+    print(f"  - Experiments: Average={RUN_AVERAGE}, Within={RUN_WITHIN}, Cross={RUN_CROSS}")
+    print("="*70)
+    
+    # ===== AVERAGE EXPERIMENTS =====
+    if RUN_AVERAGE:
+        print("\n" + "="*70)
+        print("AVERAGE RATING EXPERIMENTS")
+        print("="*70)
+        
+        # Load average data once
+        avg_df = data_loader.load_and_preprocess_data()
+        
+        for painting in PAINTING_TYPES:
+            for rating in RATING_TYPES:
+                run_average_experiments(avg_df, painting, rating)
+    
+    # ===== WITHIN-RATER EXPERIMENTS =====
+    if RUN_WITHIN:
+        print("\n" + "="*70)
+        print("WITHIN-RATER EXPERIMENTS")
+        print("="*70)
+        
+        for painting in PAINTING_TYPES:
+            for rating in RATING_TYPES:
+                run_within_rater_experiments(painting, rating)
+    
+    # ===== CROSS-RATER EXPERIMENTS =====
+    if RUN_CROSS:
+        print("\n" + "="*70)
+        print("CROSS-RATER EXPERIMENTS")
+        print("="*70)
+        
+        for painting in PAINTING_TYPES:
+            for rating in RATING_TYPES:
+                run_cross_rater_experiments(painting, rating)
+    
+    print("\n" + "="*70)
+    print("ALL EXPERIMENTS COMPLETED!")
+    print("="*70)
+    print(f"\nResults saved in: {RESULT_DIR}/")
+    print("You can now run plot_results.py to generate visualizations.")
 
 if __name__ == '__main__':
-    os.makedirs(MAIN_RESULTS_DIR, exist_ok=True)
-    if EXPERIMENT_MODE == 'AVERAGE':
-        main_dir = os.path.join(MAIN_RESULTS_DIR, "Average_Rater")
-        if os.path.exists(main_dir): shutil.rmtree(main_dir)
-        avg_df = data_loader.load_and_preprocess_data()
-        run_standard_experiments(main_dir, MODELS_TO_RUN, preloaded_df=avg_df)
-        aggregate_standard_results(main_dir, MODELS_TO_RUN)
-        plot_results(main_dir, title_prefix="Average Rater: ")
-    elif EXPERIMENT_MODE == 'WITHIN_RATER':
-        for rater_num in RATERS_TO_RUN:
-            main_dir = os.path.join(MAIN_RESULTS_DIR, "Rater_{rater_num}")
-            if os.path.exists(main_dir): shutil.rmtree(main_dir)
-            rater_df = data_loader.load_and_preprocess_data(rater_id=rater_num)
-            run_standard_experiments(main_dir, MODELS_TO_RUN, preloaded_df=rater_df)
-            aggregate_standard_results(main_dir, MODELS_TO_RUN)
-            plot_results(main_dir, title_prefix=f"Rater {rater_num}: ")
-    elif EXPERIMENT_MODE == 'CROSS_RATER':
-        orchestrate_cross_rater_experiments(raters_to_process=RATERS_TO_RUN, models_to_run=MODELS_TO_RUN)
-    print("\n\nAll selected experiments and plotting complete!")
+    main()
