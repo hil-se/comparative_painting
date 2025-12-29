@@ -1,6 +1,6 @@
-Task,P1,P2,P3,P4,P5,P6,GT_A,GT_B
-Q11,A,A,B,A,A,A,4.25,3.63
-Q12,A,A,A,A,B,A,3.49,4.02
-Q13,B,A,B,B,A,B,4.8,3.21
-Q14,B,B,B,B,B,A,3.77,3.04
-Q15,A,A,A,A,B,A,3.91,4.85
+Task,Painting1,Painting2,P1,P2,P3,P4,P5,P6,GT_A,GT_B
+Q11,50.jpg,129.jpg,A,A,B,A,A,A,4.25,3.63
+Q12,231.jpg,188.jpg,A,A,A,A,B,A,3.49,4.02
+Q13,69.jpg,28.jpg,B,A,B,B,A,B,4.8,3.21
+Q14,84.jpg,97.jpg,B,B,B,B,B,A,3.77,3.04
+Q15,136.jpg,240.jpg,A,A,A,A,B,A,3.91,4.85
