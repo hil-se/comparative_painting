@@ -135,6 +135,14 @@ python human_rating_agreement_unified.py     # Tables 7-10: inter-rater agreemen
 
 Results saved to `results/human_survey/`.
 
+### Reproducible TIGRIS execution
+
+The fixed-seed baseline wrapper, completed validation report, and Git-backed
+TIGRIS synchronization scripts are documented in
+[`reproduction/README.md`](reproduction/README.md). GPU jobs should run from a
+clean checkout of the same Git branch used for the analysis; generated results
+are stored outside the checkout.
+
 ## Results Summary
 
 ### RQ1: Deep NN vs Baseline (Table 1, Average Ratings)

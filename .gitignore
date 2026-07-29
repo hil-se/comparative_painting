@@ -7,3 +7,14 @@ Results/regression_summary.txt
 Miscilleneous
 Code_1
 Data_1
+
+# Local and cluster-generated files
+.DS_Store
+._*
+__pycache__/
+*.py[cod]
+.cache/
+logs/
+runs/
+code/deep_learning/checkpoint/
+reproduction/results/
