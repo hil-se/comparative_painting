@@ -74,12 +74,18 @@ def load_dataset(
 ) -> Dataset:
     with manifest.open(newline="", encoding="utf-8-sig") as stream:
         rows = list(csv.DictReader(stream))
-    feature_data = np.load(feature_file)
-    feature_ids = [str(value) for value in feature_data["item_ids"]]
-    feature_map = {
-        item_id: feature_data["features"][index]
-        for index, item_id in enumerate(feature_ids)
-    }
+    # A compressed NpzFile decompresses an array on every ``__getitem__``.
+    # Read each member once before constructing the lookup; indexing
+    # ``feature_data["features"]`` inside the item loop can consume unbounded
+    # time and memory on datasets such as APDDv2.
+    with np.load(feature_file) as feature_data:
+        feature_ids = [str(value) for value in feature_data["item_ids"]]
+        feature_matrix = np.asarray(feature_data["features"], dtype=np.float32)
+    if len(feature_ids) != len(feature_matrix):
+        raise ValueError("Feature IDs and feature rows have different lengths")
+    feature_index = {item_id: index for index, item_id in enumerate(feature_ids)}
+    if len(feature_index) != len(feature_ids):
+        raise ValueError("Feature IDs must be unique")
 
     item_ids: list[str] = []
     features: list[np.ndarray] = []
@@ -92,13 +98,13 @@ def load_dataset(
         if not raw_rating:
             continue
         item_id = row["item_id"]
-        if item_id not in feature_map:
+        if item_id not in feature_index:
             raise KeyError(f"No feature found for item {item_id}")
         rating = float(raw_rating)
         if not math.isfinite(rating):
             continue
         item_ids.append(item_id)
-        features.append(feature_map[item_id])
+        features.append(feature_matrix[feature_index[item_id]])
         ratings.append(rating)
         categories.append(row.get("category", ""))
 
