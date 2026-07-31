@@ -5,14 +5,53 @@ from __future__ import annotations
 import argparse
 import csv
 import hashlib
+import io
 import json
 from pathlib import Path
+import shutil
+import subprocess
 
 import numpy as np
+from PIL import Image, UnidentifiedImageError
 
 
 CLIP_MODEL = "openai/clip-vit-base-patch32"
 CLIP_REVISION = "8092f5b35a22023f7a822152e20837ac59cb91a3"
+
+
+def _is_webp(path: str | Path) -> bool:
+    header = Path(path).read_bytes()[:12]
+    return header.startswith(b"RIFF") and header[8:12] == b"WEBP"
+
+
+def load_image_rgb(path: str | Path) -> Image.Image:
+    """Load an RGB image, using ImageMagick only for unsupported WebP files."""
+    try:
+        with Image.open(path) as image:
+            return image.convert("RGB")
+    except UnidentifiedImageError as error:
+        if not _is_webp(path):
+            raise
+        converter = shutil.which("convert")
+        if converter is None:
+            raise RuntimeError(
+                f"Pillow cannot decode WebP image {path} and ImageMagick "
+                "'convert' is unavailable"
+            ) from error
+        try:
+            converted = subprocess.run(
+                [converter, str(path), "png:-"],
+                check=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            ).stdout
+        except subprocess.CalledProcessError as conversion_error:
+            stderr = conversion_error.stderr.decode("utf-8", errors="replace")
+            raise RuntimeError(
+                f"ImageMagick could not decode WebP image {path}: {stderr.strip()}"
+            ) from conversion_error
+        with Image.open(io.BytesIO(converted)) as image:
+            return image.convert("RGB")
 
 
 def read_manifest(path: Path) -> tuple[list[str], list[str]]:
@@ -33,7 +72,6 @@ def extract_clip(
     cache_dir: Path | None,
 ) -> np.ndarray:
     import torch
-    from PIL import Image
     from transformers import CLIPImageProcessor, CLIPModel
 
     # Image-only extraction does not need CLIP's tokenizer. Avoid loading the
@@ -50,8 +88,7 @@ def extract_clip(
     for start in range(0, len(image_paths), batch_size):
         images = []
         for path in image_paths[start : start + batch_size]:
-            with Image.open(path) as image:
-                images.append(image.convert("RGB"))
+            images.append(load_image_rgb(path))
         inputs = image_processor(images=images, return_tensors="pt")
         pixel_values = inputs["pixel_values"].to(device)
         with torch.inference_mode():
@@ -72,7 +109,12 @@ def extract_resnet(image_paths: list[str], batch_size: int) -> np.ndarray:
     for start in range(0, len(image_paths), batch_size):
         images = []
         for path in image_paths[start : start + batch_size]:
-            image = tf.keras.utils.load_img(path, target_size=(224, 224))
+            try:
+                image = tf.keras.utils.load_img(path, target_size=(224, 224))
+            except UnidentifiedImageError:
+                image = load_image_rgb(path).resize(
+                    (224, 224), resample=Image.Resampling.NEAREST
+                )
             images.append(tf.keras.utils.img_to_array(image))
         values = np.asarray(images, dtype=np.float32)
         values = tf.keras.applications.resnet50.preprocess_input(values)
