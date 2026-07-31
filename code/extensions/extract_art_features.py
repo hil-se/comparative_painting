@@ -34,9 +34,11 @@ def extract_clip(
 ) -> np.ndarray:
     import torch
     from PIL import Image
-    from transformers import CLIPModel, CLIPProcessor
+    from transformers import CLIPImageProcessor, CLIPModel
 
-    processor = CLIPProcessor.from_pretrained(
+    # Image-only extraction does not need CLIP's tokenizer. Avoid loading the
+    # legacy fast-tokenizer artifact, which recent Transformers versions reject.
+    image_processor = CLIPImageProcessor.from_pretrained(
         CLIP_MODEL, revision=CLIP_REVISION, cache_dir=cache_dir
     )
     model = CLIPModel.from_pretrained(
@@ -50,7 +52,7 @@ def extract_clip(
         for path in image_paths[start : start + batch_size]:
             with Image.open(path) as image:
                 images.append(image.convert("RGB"))
-        inputs = processor(images=images, return_tensors="pt")
+        inputs = image_processor(images=images, return_tensors="pt")
         pixel_values = inputs["pixel_values"].to(device)
         with torch.inference_mode():
             values = model.get_image_features(pixel_values=pixel_values)
