@@ -45,8 +45,12 @@ TIGRIS as:
 ```
 
 The preparation job validates that every annotated filename exists before
-feature extraction. Full images, embeddings, checkpoints, and result CSVs
-remain outside Git under
+feature extraction. The official image archive available in July 2026 omits
+`36e41ae7b2764733b48475adf617b758.jpg` and includes six byte-identical
+``(1)`` duplicates. The controlled manifest therefore permits and records
+exactly this one missing annotation, yielding 10,022 matched images; the
+unreferenced duplicates are ignored. Full images, embeddings, checkpoints,
+and result CSVs remain outside Git under
 `/home/xx4455/paper-projects/artifacts/comparative_painting`.
 
 All TIGRIS jobs request one GH200 GPU and use Slack notifications for every

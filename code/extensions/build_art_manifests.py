@@ -134,7 +134,10 @@ def build_sidhu(
 
 
 def build_apdd(
-    annotations: Path, images: Path, output: Path
+    annotations: Path,
+    images: Path,
+    output: Path,
+    max_missing_images: int = 0,
 ) -> dict[str, object]:
     rows: list[dict[str, str]] = []
     missing_images: list[str] = []
@@ -164,10 +167,11 @@ def build_apdd(
             row.update({target: source[target].strip() for target in APDD_TARGETS})
             rows.append(row)
 
-    if missing_images:
+    if len(missing_images) > max_missing_images:
         preview = ", ".join(missing_images[:5])
         raise FileNotFoundError(
             f"{len(missing_images)} APDDv2 images are missing beneath {images}; "
+            f"allowed maximum is {max_missing_images}; "
             f"first missing files: {preview}"
         )
 
@@ -186,6 +190,8 @@ def build_apdd(
         "rows": len(rows),
         "targets": list(APDD_TARGETS),
         "target_non_null_counts": target_counts,
+        "excluded_missing_images": missing_images,
+        "excluded_missing_image_count": len(missing_images),
         "manifest": str(output.resolve()),
     }
 
@@ -203,6 +209,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--annotations", type=Path, help="APDDv2-10023.csv")
     parser.add_argument("--images", type=Path, help="APDDv2 image directory")
     parser.add_argument(
+        "--max-missing-images",
+        type=int,
+        default=0,
+        help="maximum documented APDDv2 annotation rows allowed without images",
+    )
+    parser.add_argument(
         "--resnet-output",
         type=Path,
         help="package released Sidhu ResNet features as an aligned NPZ",
@@ -219,7 +231,12 @@ def main() -> None:
     else:
         if args.annotations is None or args.images is None:
             raise SystemExit("APDDv2 requires --annotations and --images")
-        summary = build_apdd(args.annotations, args.images, args.output)
+        summary = build_apdd(
+            args.annotations,
+            args.images,
+            args.output,
+            max_missing_images=args.max_missing_images,
+        )
 
     summary_path = args.output.with_suffix(".summary.json")
     summary_path.write_text(

@@ -26,6 +26,7 @@ python code/extensions/build_art_manifests.py \
     --dataset apddv2 \
     --annotations "${dataset_root}/APDDv2-10023.csv" \
     --images "${dataset_root}/images" \
+    --max-missing-images 1 \
     --output "${artifact_root}/manifests/apddv2.csv"
 
 python code/extensions/extract_art_features.py \
