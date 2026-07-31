@@ -236,6 +236,40 @@ def callbacks(path: Path):
     ]
 
 
+def aligned_pairwise_tensors(y_true, y_pred):
+    """Flatten pair labels and score differences to matching 1-D tensors.
+
+    Keras expands one-dimensional targets to ``(batch, 1)`` before invoking a
+    compiled loss. Flattening only the predictions would therefore broadcast
+    ``(batch, 1) * (batch,)`` to ``(batch, batch)`` and mix unrelated pairs.
+    """
+
+    import tensorflow as tf
+
+    labels = tf.reshape(tf.cast(y_true, tf.float32), [-1])
+    differences = tf.reshape(tf.cast(y_pred, tf.float32), [-1])
+    tf.debugging.assert_equal(
+        tf.shape(labels),
+        tf.shape(differences),
+        message="Pair labels and score differences must align elementwise",
+    )
+    return labels, differences
+
+
+def hinge_pairwise_loss(y_true, y_pred):
+    import tensorflow as tf
+
+    labels, differences = aligned_pairwise_tensors(y_true, y_pred)
+    return tf.reduce_mean(tf.nn.relu(1.0 - labels * differences))
+
+
+def bradley_terry_pairwise_loss(y_true, y_pred):
+    import tensorflow as tf
+
+    labels, differences = aligned_pairwise_tensors(y_true, y_pred)
+    return tf.reduce_mean(tf.nn.softplus(-labels * differences))
+
+
 def train_regression(
     features: np.ndarray,
     ratings: np.ndarray,
@@ -291,15 +325,9 @@ def train_pairwise(
     model = tf.keras.Model([left_input, right_input], difference)
 
     if objective == "hinge":
-        loss = lambda y, d: tf.reduce_mean(
-            tf.nn.relu(1.0 - tf.cast(y, tf.float32) * tf.squeeze(d, axis=-1))
-        )
+        loss = hinge_pairwise_loss
     elif objective == "bradley_terry":
-        loss = lambda y, d: tf.reduce_mean(
-            tf.nn.softplus(
-                -tf.cast(y, tf.float32) * tf.squeeze(d, axis=-1)
-            )
-        )
+        loss = bradley_terry_pairwise_loss
     else:
         raise ValueError(objective)
 
@@ -507,6 +535,7 @@ def main() -> None:
         ),
         "training_only_standardization": True,
         "pairwise_validation_affine_calibration": True,
+        "pairwise_loss_elementwise_shape_check": True,
     }
     args.output.with_suffix(".metadata.json").write_text(
         json.dumps(metadata, indent=2, sort_keys=True) + "\n", encoding="utf-8"
