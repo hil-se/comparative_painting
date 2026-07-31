@@ -16,7 +16,7 @@
 set -euo pipefail
 
 spack env activate default-ml-aarch64-25050701
-export TF_FORCE_GPU_ALLOW_GROWTH=true
+export TF_GPU_MEMORY_LIMIT_MB=24576
 export PYTHONUNBUFFERED=1
 artifact_root=/home/xx4455/paper-projects/artifacts/comparative_painting
 targets=(

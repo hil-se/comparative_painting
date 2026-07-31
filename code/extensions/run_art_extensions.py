@@ -25,6 +25,9 @@ from scipy.stats import kendalltau, pearsonr, spearmanr
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
 
+_TENSORFLOW_DEVICES_CONFIGURED = False
+
+
 @dataclass(frozen=True)
 class Dataset:
     item_ids: np.ndarray
@@ -34,17 +37,28 @@ class Dataset:
 
 
 def seed_everything(seed: int) -> None:
+    global _TENSORFLOW_DEVICES_CONFIGURED
+
     os.environ["PYTHONHASHSEED"] = str(seed)
     random.seed(seed)
     np.random.seed(seed)
     import tensorflow as tf
 
-    for device in tf.config.list_physical_devices("GPU"):
-        try:
-            tf.config.experimental.set_memory_growth(device, True)
-        except RuntimeError:
-            if not tf.config.experimental.get_memory_growth(device):
-                raise
+    if not _TENSORFLOW_DEVICES_CONFIGURED:
+        memory_limit = os.environ.get("TF_GPU_MEMORY_LIMIT_MB")
+        for device in tf.config.list_physical_devices("GPU"):
+            if memory_limit:
+                tf.config.set_logical_device_configuration(
+                    device,
+                    [
+                        tf.config.LogicalDeviceConfiguration(
+                            memory_limit=float(memory_limit)
+                        )
+                    ],
+                )
+            else:
+                tf.config.experimental.set_memory_growth(device, True)
+        _TENSORFLOW_DEVICES_CONFIGURED = True
     tf.keras.utils.set_random_seed(seed)
     try:
         tf.config.experimental.enable_op_determinism()
