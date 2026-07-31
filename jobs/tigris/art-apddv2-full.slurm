@@ -6,7 +6,7 @@
 #SBATCH --array=0-21
 #SBATCH --gres=gpu:gh200:1
 #SBATCH --cpus-per-task=4
-#SBATCH --mem=64G
+#SBATCH --mem=128G
 #SBATCH --time=24:00:00
 #SBATCH --mail-user=slack:@xx4455
 #SBATCH --mail-type=ALL
@@ -16,6 +16,8 @@
 set -euo pipefail
 
 spack env activate default-ml-aarch64-25050701
+export TF_FORCE_GPU_ALLOW_GROWTH=true
+export PYTHONUNBUFFERED=1
 artifact_root=/home/xx4455/paper-projects/artifacts/comparative_painting
 targets=(
     "Total aesthetic score"

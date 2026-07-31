@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import gc
 import hashlib
 import json
 import math
@@ -38,6 +39,12 @@ def seed_everything(seed: int) -> None:
     np.random.seed(seed)
     import tensorflow as tf
 
+    for device in tf.config.list_physical_devices("GPU"):
+        try:
+            tf.config.experimental.set_memory_growth(device, True)
+        except RuntimeError:
+            if not tf.config.experimental.get_memory_growth(device):
+                raise
     tf.keras.utils.set_random_seed(seed)
     try:
         tf.config.experimental.enable_op_determinism()
@@ -293,9 +300,11 @@ def train_regression(
         verbose=0,
     )
     scores = model.predict(features, batch_size=256, verbose=0).ravel()
-    del model
+    epochs_trained = len(history.history["loss"])
+    del history, model
     tf.keras.backend.clear_session()
-    return scores, len(history.history["loss"])
+    gc.collect()
+    return scores, epochs_trained
 
 
 def train_pairwise(
@@ -345,13 +354,27 @@ def train_pairwise(
         verbose=0,
     )
     scores = encoder.predict(features, batch_size=256, verbose=0).ravel()
-    del model, encoder
+    epochs_trained = len(history.history["loss"])
+    train_pair_count = len(train_labels)
+    validation_pair_count = len(val_labels)
+    del (
+        history,
+        model,
+        encoder,
+        train_left,
+        train_right,
+        train_labels,
+        val_left,
+        val_right,
+        val_labels,
+    )
     tf.keras.backend.clear_session()
+    gc.collect()
     return (
         scores,
-        len(history.history["loss"]),
-        len(train_labels),
-        len(val_labels),
+        epochs_trained,
+        train_pair_count,
+        validation_pair_count,
     )
 
 
