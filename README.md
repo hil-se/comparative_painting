@@ -73,6 +73,10 @@ See `Data/README.md` for full details.
 
 All scripts should be run from their respective directories.
 
+The controlled CLIP, Bradley-Terry, and APDDv2 extension protocol is
+documented in
+[`docs/art_extension_experiments.md`](docs/art_extension_experiments.md).
+
 ### Prerequisites
 
 ```bash
