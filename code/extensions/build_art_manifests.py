@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import io
 import json
 from pathlib import Path
 
@@ -142,7 +143,11 @@ def build_apdd(
     rows: list[dict[str, str]] = []
     missing_images: list[str] = []
 
-    with annotations.open(newline="", encoding="utf-8-sig") as stream:
+    annotation_text = annotations.read_text(
+        encoding="utf-8-sig", errors="replace"
+    )
+    decode_replacement_count = annotation_text.count("\ufffd")
+    with io.StringIO(annotation_text, newline="") as stream:
         reader = csv.DictReader(stream)
         missing_columns = set(("filename", "Artistic Categories", *APDD_TARGETS))
         missing_columns.difference_update(reader.fieldnames or ())
@@ -190,6 +195,7 @@ def build_apdd(
         "rows": len(rows),
         "targets": list(APDD_TARGETS),
         "target_non_null_counts": target_counts,
+        "annotation_decode_replacement_count": decode_replacement_count,
         "excluded_missing_images": missing_images,
         "excluded_missing_image_count": len(missing_images),
         "manifest": str(output.resolve()),

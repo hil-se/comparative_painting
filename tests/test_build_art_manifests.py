@@ -73,6 +73,19 @@ class ApddManifestMissingImageTests(unittest.TestCase):
                 max_missing_images=0,
             )
 
+    def test_malformed_utf8_is_replaced_and_recorded(self) -> None:
+        content = self.annotations.read_bytes().replace(
+            b"painting", b"paint\xa1ing"
+        )
+        self.annotations.write_bytes(content)
+        summary = MODULE.build_apdd(
+            self.annotations,
+            self.images,
+            self.root / "manifest.csv",
+            max_missing_images=1,
+        )
+        self.assertEqual(summary["annotation_decode_replacement_count"], 2)
+
 
 if __name__ == "__main__":
     unittest.main()
