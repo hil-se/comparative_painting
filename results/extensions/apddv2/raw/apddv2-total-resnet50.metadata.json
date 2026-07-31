@@ -1,0 +1,42 @@
+{
+  "category": "all",
+  "dataset": "apddv2",
+  "n_values": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10
+  ],
+  "objectives": [
+    "regression",
+    "hinge",
+    "bradley_terry"
+  ],
+  "pairwise_loss_elementwise_shape_check": true,
+  "pairwise_validation_affine_calibration": true,
+  "representation": "resnet50",
+  "rows": 210,
+  "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+  ],
+  "sha256": "e362c2d18311cb9939cf7739ad0bf856a24b04b9be08bf157e234ac0e169cba5",
+  "split": "70% train / 15% validation / 15% test",
+  "target": "Total aesthetic score",
+  "tensorflow": "2.16.1",
+  "training_only_standardization": true
+}

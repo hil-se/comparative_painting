@@ -1,0 +1,42 @@
+{
+  "category": "all",
+  "dataset": "apddv2",
+  "n_values": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10
+  ],
+  "objectives": [
+    "regression",
+    "hinge",
+    "bradley_terry"
+  ],
+  "pairwise_loss_elementwise_shape_check": true,
+  "pairwise_validation_affine_calibration": true,
+  "representation": "clip-vit-b32",
+  "rows": 210,
+  "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+  ],
+  "sha256": "682245ac7dde1cca39f41ce15134852983048e8969235c9e728cf279f5d3d05e",
+  "split": "70% train / 15% validation / 15% test",
+  "target": "Light and shadow",
+  "tensorflow": "2.16.1",
+  "training_only_standardization": true
+}

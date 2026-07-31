@@ -41,7 +41,7 @@ TIGRIS as:
 /home/xx4455/paper-projects/artifacts/comparative_painting/datasets/apddv2/
 ├── APDDv2-10023.csv
 └── images/
-    └── <10,023 image files>
+    └── <archive image files>
 ```
 
 The preparation job validates that every annotated filename exists before

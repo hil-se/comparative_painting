@@ -1,0 +1,41 @@
+{
+  "category": "representational",
+  "dataset": "sidhu",
+  "n_values": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10
+  ],
+  "objectives": [
+    "regression",
+    "hinge",
+    "bradley_terry"
+  ],
+  "pairwise_validation_affine_calibration": true,
+  "representation": "resnet50",
+  "rows": 210,
+  "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+  ],
+  "sha256": "133677832d90b481151828bc75b0860e3bccb0fef0d908b2fb2bafdf468adff6",
+  "split": "140 train / 20 validation / remainder test",
+  "target": "liking",
+  "tensorflow": "2.16.1",
+  "training_only_standardization": true
+}

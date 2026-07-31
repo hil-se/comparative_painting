@@ -1,0 +1,42 @@
+{
+  "category": "all",
+  "dataset": "apddv2",
+  "n_values": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10
+  ],
+  "objectives": [
+    "regression",
+    "hinge",
+    "bradley_terry"
+  ],
+  "pairwise_loss_elementwise_shape_check": true,
+  "pairwise_validation_affine_calibration": true,
+  "representation": "resnet50",
+  "rows": 210,
+  "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+  ],
+  "sha256": "b9d5458dcc1f61b0e49613b8093b9579b49b40c191d55eb9dcfb3bf1c8d40c81",
+  "split": "70% train / 15% validation / 15% test",
+  "target": "Layout and composition",
+  "tensorflow": "2.16.1",
+  "training_only_standardization": true
+}

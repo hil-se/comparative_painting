@@ -1,0 +1,42 @@
+{
+  "category": "all",
+  "dataset": "apddv2",
+  "n_values": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10
+  ],
+  "objectives": [
+    "regression",
+    "hinge",
+    "bradley_terry"
+  ],
+  "pairwise_loss_elementwise_shape_check": true,
+  "pairwise_validation_affine_calibration": true,
+  "representation": "clip-vit-b32",
+  "rows": 210,
+  "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+  ],
+  "sha256": "5ee44a5dddf52b2a62a2fd06b10d7df8be73819863a4459a63dfbb83ced43f29",
+  "split": "70% train / 15% validation / 15% test",
+  "target": "Creativity",
+  "tensorflow": "2.16.1",
+  "training_only_standardization": true
+}

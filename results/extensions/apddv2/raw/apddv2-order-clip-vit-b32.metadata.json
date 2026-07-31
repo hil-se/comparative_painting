@@ -1,0 +1,42 @@
+{
+  "category": "all",
+  "dataset": "apddv2",
+  "n_values": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10
+  ],
+  "objectives": [
+    "regression",
+    "hinge",
+    "bradley_terry"
+  ],
+  "pairwise_loss_elementwise_shape_check": true,
+  "pairwise_validation_affine_calibration": true,
+  "representation": "clip-vit-b32",
+  "rows": 210,
+  "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+  ],
+  "sha256": "f50c073ff5a70c6db7f8efbb9172a4bacf207e859545c6c98d49bdc4941aae16",
+  "split": "70% train / 15% validation / 15% test",
+  "target": "The sense of order",
+  "tensorflow": "2.16.1",
+  "training_only_standardization": true
+}

@@ -1,0 +1,41 @@
+{
+  "category": "representational",
+  "dataset": "sidhu",
+  "n_values": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10
+  ],
+  "objectives": [
+    "hinge",
+    "bradley_terry"
+  ],
+  "pairwise_loss_elementwise_shape_check": true,
+  "pairwise_validation_affine_calibration": true,
+  "representation": "clip-vit-b32",
+  "rows": 200,
+  "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+  ],
+  "sha256": "646f7e9c0a27278e41f69c1e6085724dd24bdca53c995f5094807554be793c58",
+  "split": "140 train / 20 validation / remainder test",
+  "target": "beauty",
+  "tensorflow": "2.16.1",
+  "training_only_standardization": true
+}
