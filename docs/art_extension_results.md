@@ -4,6 +4,7 @@ This note consolidates Dr. Yu's requested art-paper experiments on the
 corrected Sidhu dataset and APDDv2. Detailed, machine-generated tables are in:
 
 - `results/extensions/sidhu/summary/analysis.md`
+- `results/extensions/sidhu_rater/summary/analysis.md`
 - `results/extensions/apddv2/summary/analysis.md`
 
 ## Result integrity
@@ -14,6 +15,8 @@ corrected Sidhu dataset and APDDv2. Detailed, machine-generated tables are in:
   unrelated pairs.
 - APDDv2: 22 targets/representation files, 210 fits per file, and 4,620 fits
   total.
+- Sidhu rater extension: 40 CLIP files, 210 fits per file, and 8,400 fits
+  total across four tasks, within/cross protocols, and five raters.
 - Every included CSV matches the SHA-256 digest in its metadata.
 - Comparisons are paired on the same target/condition, seed, split, and N.
 - Confidence intervals bootstrap target/condition-level mean differences, so
@@ -76,6 +79,34 @@ From N=1 to N=10, mean Spearman increases in all eight
 dataset/representation/loss combinations. The increase is larger on Sidhu
 (roughly +0.095 to +0.126) than APDDv2 (+0.025 to +0.067), consistent with
 diminishing returns on the larger dataset.
+
+### 5. CLIP improves rater-level prediction, but transfer remains task-dependent
+
+The completed rater extension averages five target raters and ten matched
+seeds. At the common maximum budget, N=10, the results are:
+
+| Task | Objective | Within Pearson | Within Spearman | Cross Pearson | Cross Spearman |
+|---|---|---:|---:|---:|---:|
+| Abstract Beauty | Regression | 0.370 | 0.345 | 0.335 | 0.297 |
+| Abstract Beauty | Hinge | 0.433 | 0.410 | 0.395 | 0.355 |
+| Abstract Beauty | Bradley-Terry | 0.439 | 0.411 | 0.392 | 0.350 |
+| Abstract Liking | Regression | 0.244 | 0.240 | 0.058 | 0.044 |
+| Abstract Liking | Hinge | 0.273 | 0.263 | 0.025 | 0.012 |
+| Abstract Liking | Bradley-Terry | 0.267 | 0.261 | 0.029 | 0.015 |
+| Representational Beauty | Regression | 0.366 | 0.349 | 0.354 | 0.339 |
+| Representational Beauty | Hinge | 0.439 | 0.420 | 0.413 | 0.394 |
+| Representational Beauty | Bradley-Terry | 0.444 | 0.426 | 0.410 | 0.391 |
+| Representational Liking | Regression | 0.201 | 0.192 | 0.135 | 0.127 |
+| Representational Liking | Hinge | 0.247 | 0.237 | 0.200 | 0.194 |
+| Representational Liking | Bradley-Terry | 0.254 | 0.247 | 0.202 | 0.199 |
+
+Within-rater performance exceeds cross-rater performance for every task and
+objective. Pairwise training improves Abstract Beauty and both
+representational tasks, but cross-rater Abstract Liking remains near zero and
+is best served by regression. Hinge and Bradley-Terry differ by no more than
+0.006 Spearman at N=10, reinforcing the aggregate finding that neither loss is
+uniformly superior. APDDv2 is not part of this analysis because it has
+aggregate attribute scores rather than individual-rater labels.
 
 ## Suggested message to Dr. Yu
 

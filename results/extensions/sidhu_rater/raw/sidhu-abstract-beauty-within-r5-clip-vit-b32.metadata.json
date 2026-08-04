@@ -1,0 +1,43 @@
+{
+  "category": "abstract",
+  "cross_training_labels": "mean of the other four raters",
+  "dataset": "sidhu",
+  "evaluation_labels": "target rater",
+  "mode": "within",
+  "n_values": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10
+  ],
+  "objectives": [
+    "regression",
+    "hinge",
+    "bradley_terry"
+  ],
+  "rater": 5,
+  "representation": "clip-vit-b32",
+  "rows": 210,
+  "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+  ],
+  "sha256": "d0e74de305aaeabe2191570a5918ce941e1480b9a1cdbdf5d66214d046dd7eeb",
+  "split": "140 train / 20 validation / remainder test",
+  "target": "beauty",
+  "training_only_standardization": true
+}
