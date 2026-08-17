@@ -1,57 +1,59 @@
-# CLIP, Bradley-Terry, and APDDv2 extensions
+# Controlled art-extension protocol
 
-These experiments implement Dr. Yu's requested additions to the art paper:
+The final extension compares ResNet-50 with CLIP ViT-B/32, hinge ranking with
+Bradley--Terry loss, and the Sidhu conditions with all 11 APDDv2 targets.
 
-1. compare CLIP ViT-B/32 with the released ResNet-50 representation;
-2. compare Bradley-Terry logistic loss with the released hinge loss;
-3. repeat the applicable regression and comparative simulations on APDDv2.
+## Locked downstream method
 
-## Controlled protocol
+Twenty-two candidate configurations were screened and confirmed using APDDv2
+validation macro Spearman. The selected method,
+`shallow-mse-z-gelu-ln-rawclip`, was locked before test evaluation and reused
+without retuning across datasets, representations, objectives, targets,
+raters, and seeds.
 
-- Ten seeds are used for every condition.
-- Hinge and Bradley-Terry use identical splits and sampled training pairs.
-- Features are standardized using training data only.
-- Sidhu experiments preserve the paper's 140-example training size, add a
-  20-example validation set, and use the remaining examples for testing.
-- APDDv2 uses deterministic 70/15/15 train/validation/test splits.
-- Pairwise objectives sweep N=1 through N=10.
-- Pairwise latent scores are affine-calibrated using validation data before
-  MAE and R2 are computed. Pair accuracy and rank correlations use raw scores.
+- Architecture: `256 -> 64 -> 1`.
+- Activation and normalization: GELU and LayerNorm.
+- Regularization: dropout 0.1 and L2 `1e-5` on the first hidden layer.
+- Fixed visual features: no additional feature standardization.
+- Regression targets: standardized from the training partition; predictions
+  are transformed back to the original target scale.
+- Regression loss: MSE.
+- Pairwise losses: hinge and Bradley--Terry.
+- Pairwise scores: affine-calibrated on validation data only for MAE and
+  R-squared; pair accuracy and rank correlations use raw scores.
+- Optimization: Adam at `1e-3`, batch size 128, maximum 200 epochs.
+- Model selection during training: validation Spearman, minimum 25 epochs,
+  patience 20, best-weight restoration, and learning-rate halving after 10
+  plateaus to a minimum of `1e-6`.
 
-APDDv2 publishes only aggregate per-image attribute scores, not individual
-rater responses. Consequently, its average-rating regression and pairwise
-simulations are reproducible, but the paper's within-rater and cross-rater
-conditions cannot be constructed from APDDv2.
+## Data and splits
 
-## Data-alignment correction
+- Sidhu: 140 training examples, 20 validation examples, and the remainder for
+  testing for each of the four category/target conditions.
+- APDDv2: deterministic 70/15/15 train/validation/test splits for all 11
+  aggregate targets.
+- Pair budget: `N = M / n_train`; pairwise runs use `N=1` through `N=10`.
+- Repetitions: ten matched seeds.
 
-The released Sidhu feature arrays omit one abstract image and two
-representational images and do not store item identifiers. The released
-rating tables also stop before painting 240. Using array position therefore
-shifts feature/rating alignment after missing images. The extension manifest
-reconstructs the image IDs explicitly and joins features and ratings by ID.
+The corrected Sidhu manifest joins ratings, images, and features by explicit
+item ID. It accounts for the three paintings omitted from the released
+feature arrays and retains 477 aligned items.
 
-## APDDv2 dependency
+The official APDDv2 archive has one missing annotated image and six
+byte-identical duplicate files. The controlled manifest records the missing
+item, ignores unreferenced duplicates, and retains 10,022 matched images.
+APDDv2 publishes aggregate scores only, so rater-level experiments cannot be
+constructed for that dataset.
 
-The official APDDv2 repository provides the annotation CSV on GitHub and the
-10,023-image archive through Baidu Netdisk. The archive must be placed on
-TIGRIS as:
+## Execution and integrity
 
-```text
-/home/xx4455/paper-projects/artifacts/comparative_painting/datasets/apddv2/
-├── APDDv2-10023.csv
-└── images/
-    └── <archive image files>
-```
+The authoritative runners are `run_art_locked_head.py` and
+`run_sidhu_rater_locked_head.py`. Each result has a metadata sidecar with the
+locked configuration, source hashes, result hash, split, targets, objectives,
+budgets, and seeds. `validate_art_result.py` verifies the row keys and SHA-256
+digests before merged summaries are produced.
 
-The preparation job validates that every annotated filename exists before
-feature extraction. The official image archive available in July 2026 omits
-`36e41ae7b2764733b48475adf617b758.jpg` and includes six byte-identical
-``(1)`` duplicates. The controlled manifest therefore permits and records
-exactly this one missing annotation, yielding 10,022 matched images; the
-unreferenced duplicates are ignored. Full images, embeddings, checkpoints,
-and result CSVs remain outside Git under
-`/home/xx4455/paper-projects/artifacts/comparative_painting`.
-
-All TIGRIS jobs request one GH200 GPU and use Slack notifications for every
-job state through `--mail-user=slack:@xx4455` and `--mail-type=ALL`.
+Cluster jobs use the `loop` account on SPORC's `onboard` partition. Generated
+images, feature arrays, and intermediate checkpoints remain outside Git;
+final result CSVs, metadata, and summaries are under
+`results/extensions/locked_head/`.

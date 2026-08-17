@@ -309,7 +309,11 @@ def train_regression(
     import tensorflow as tf
 
     model = build_encoder(features.shape[1])
-    model.compile(optimizer="adam", loss="mae")
+    # Keras may auto-enable XLA on GPUs. Recompiling this small model hundreds
+    # of times in one process then retains compiled graphs and exhausts host
+    # memory, despite clear_session() below. Eager graph execution is faster
+    # for these small folds and keeps memory bounded.
+    model.compile(optimizer="adam", loss="mae", jit_compile=False)
     history = model.fit(
         features[train],
         ratings[train],
@@ -360,7 +364,7 @@ def train_pairwise(
     else:
         raise ValueError(objective)
 
-    model.compile(optimizer="adam", loss=loss)
+    model.compile(optimizer="adam", loss=loss, jit_compile=False)
     history = model.fit(
         [features[train_left], features[train_right]],
         train_labels,
@@ -570,6 +574,8 @@ def main() -> None:
         "seeds": parse_range(args.seeds),
         "rows": len(rows),
         "sha256": digest,
+        "manifest_sha256": hashlib.sha256(args.manifest.read_bytes()).hexdigest(),
+        "features_sha256": hashlib.sha256(args.features.read_bytes()).hexdigest(),
         "tensorflow": __import__("tensorflow").__version__,
         "split": (
             "140 train / 20 validation / remainder test"

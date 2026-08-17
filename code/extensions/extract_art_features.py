@@ -65,6 +65,50 @@ def read_manifest(path: Path) -> tuple[list[str], list[str]]:
     )
 
 
+def read_feature_file(path: Path) -> tuple[list[str], np.ndarray]:
+    with np.load(path) as data:
+        item_ids = [str(value) for value in data["item_ids"]]
+        features = np.asarray(data["features"], dtype=np.float32)
+    if len(item_ids) != len(features):
+        raise ValueError(f"Feature IDs and rows differ in {path}")
+    if len(set(item_ids)) != len(item_ids):
+        raise ValueError(f"Feature IDs are not unique in {path}")
+    return item_ids, features
+
+
+def merge_feature_rows(
+    item_ids: list[str],
+    reused_ids: list[str],
+    reused_features: np.ndarray,
+    extracted_ids: list[str],
+    extracted_features: np.ndarray,
+) -> np.ndarray:
+    """Assemble reused and newly extracted rows in manifest order."""
+
+    if len(reused_ids) != len(reused_features):
+        raise ValueError("Reused feature IDs and rows differ")
+    if len(extracted_ids) != len(extracted_features):
+        raise ValueError("Extracted feature IDs and rows differ")
+    all_ids = reused_ids + extracted_ids
+    if len(set(all_ids)) != len(all_ids):
+        raise ValueError("Reused and extracted feature IDs overlap")
+    matrices = [matrix for matrix in (reused_features, extracted_features) if matrix.size]
+    if not matrices:
+        raise ValueError("No feature rows are available")
+    dimensions = {matrix.shape[1] for matrix in matrices}
+    if len(dimensions) != 1:
+        raise ValueError("Reused and extracted feature dimensions differ")
+
+    lookup = {
+        item_id: row
+        for item_id, row in zip(all_ids, np.concatenate(matrices), strict=True)
+    }
+    missing = [item_id for item_id in item_ids if item_id not in lookup]
+    if missing:
+        raise ValueError(f"No feature row for manifest IDs: {missing[:5]}")
+    return np.asarray([lookup[item_id] for item_id in item_ids], dtype=np.float32)
+
+
 def extract_clip(
     image_paths: list[str],
     batch_size: int,
@@ -140,20 +184,54 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--batch-size", type=int, default=64)
     parser.add_argument("--device", default="cuda")
     parser.add_argument("--cache-dir", type=Path)
+    parser.add_argument(
+        "--reuse-features",
+        type=Path,
+        help="reuse rows with matching item IDs and extract only missing rows",
+    )
     return parser.parse_args()
 
 
 def main() -> None:
     args = parse_args()
     item_ids, image_paths = read_manifest(args.manifest)
+    reused_ids: list[str] = []
+    reused_features = np.empty((0, 0), dtype=np.float32)
+    if args.reuse_features is not None:
+        reused_ids, reused_features = read_feature_file(args.reuse_features)
+    reused_id_set = set(reused_ids)
+    extracted_ids = [item_id for item_id in item_ids if item_id not in reused_id_set]
+    extracted_paths = [
+        image_path
+        for item_id, image_path in zip(item_ids, image_paths, strict=True)
+        if item_id not in reused_id_set
+    ]
+
     if args.representation == "clip-vit-b32":
-        features = extract_clip(
-            image_paths, args.batch_size, args.device, args.cache_dir
-        )
         source = {"model": CLIP_MODEL, "revision": CLIP_REVISION}
+        if extracted_paths:
+            extracted_features = extract_clip(
+                extracted_paths, args.batch_size, args.device, args.cache_dir
+            )
     else:
-        features = extract_resnet(image_paths, args.batch_size)
         source = {"model": "tf.keras.applications.ResNet50", "weights": "imagenet"}
+        if extracted_paths:
+            extracted_features = extract_resnet(extracted_paths, args.batch_size)
+    if not extracted_paths:
+        extracted_features = np.empty(
+            (0, reused_features.shape[1]), dtype=np.float32
+        )
+
+    if args.reuse_features is None:
+        features = extracted_features
+    else:
+        features = merge_feature_rows(
+            item_ids,
+            reused_ids,
+            reused_features,
+            extracted_ids,
+            extracted_features,
+        )
 
     if len(item_ids) != len(features):
         raise AssertionError("Feature count does not match manifest")
@@ -171,6 +249,13 @@ def main() -> None:
         "rows": len(item_ids),
         "dimensions": int(features.shape[1]),
         "sha256": digest,
+        "reused_rows": len(item_ids) - len(extracted_ids),
+        "extracted_rows": len(extracted_ids),
+        "reuse_features": (
+            None
+            if args.reuse_features is None
+            else str(args.reuse_features.resolve())
+        ),
         **source,
     }
     args.output.with_suffix(".metadata.json").write_text(

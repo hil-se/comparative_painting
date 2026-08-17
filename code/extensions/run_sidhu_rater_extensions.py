@@ -247,6 +247,7 @@ def main() -> None:
         "seeds": parse_range(args.seeds),
         "rows": len(rows),
         "sha256": digest,
+        "features_sha256": hashlib.sha256(args.features.read_bytes()).hexdigest(),
         "split": "140 train / 20 validation / remainder test",
         "training_only_standardization": True,
         "cross_training_labels": "mean of the other four raters",

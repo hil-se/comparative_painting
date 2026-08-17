@@ -25,6 +25,19 @@ APDD_TARGETS = (
     "Mood",
 )
 
+SIDHU_RATING_FILES = {
+    ("abstract", "beauty"): ("Abstract_All_Raters.csv", "Beauty"),
+    ("abstract", "liking"): ("Abstract_Liking_All_Raters.csv", "Liking"),
+    ("representational", "beauty"): (
+        "Representational_All_Raters.csv",
+        "Beauty",
+    ),
+    ("representational", "liking"): (
+        "Representational_Liking_All_Raters.csv",
+        "Liking",
+    ),
+}
+
 
 def resolve_sidhu_image(
     image_dir: Path, painting_index: int
@@ -51,29 +64,40 @@ def build_sidhu(
     repository: Path, output: Path, resnet_output: Path | None = None
 ) -> dict[str, object]:
     feature_dir = repository / "code" / "deep_learning" / "feature"
+    data_dir = repository / "Data"
     rows: dict[tuple[str, int], dict[str, str | float]] = {}
 
     for category in ("abstract", "representational"):
-        image_dir = repository / "Data" / f"{category.title()}_Images"
+        image_dir = data_dir / f"{category.title()}_Images"
         for target in ("beauty", "liking"):
-            ratings_path = feature_dir / f"{category}_{target}.csv"
+            ratings_file, rating_column = SIDHU_RATING_FILES[(category, target)]
+            ratings_path = data_dir / ratings_file
+            ratings_by_painting: dict[int, list[float]] = {}
             with ratings_path.open(newline="", encoding="utf-8-sig") as stream:
                 for rating_row in csv.DictReader(stream):
-                    painting_index = int(rating_row["Painting"])
-                    image_path = resolve_sidhu_image(image_dir, painting_index)
-                    if image_path is None:
-                        continue
-                    key = (category, painting_index)
-                    row = rows.setdefault(
-                        key,
-                        {
-                            "dataset": "sidhu",
-                            "item_id": f"{category}-{painting_index:03d}",
-                            "image_path": str(image_path),
-                            "category": category,
-                        },
+                    painting_number = int(Path(rating_row["Painting"]).stem)
+                    ratings_by_painting.setdefault(painting_number, []).append(
+                        float(rating_row[rating_column])
                     )
-                    row[target] = float(rating_row["Average"])
+
+            for painting_number in sorted(ratings_by_painting):
+                painting_index = painting_number - 1
+                image_path = resolve_sidhu_image(image_dir, painting_index)
+                if image_path is None:
+                    continue
+                key = (category, painting_index)
+                row = rows.setdefault(
+                    key,
+                    {
+                        "dataset": "sidhu",
+                        "item_id": f"{category}-{painting_index:03d}",
+                        "image_path": str(image_path),
+                        "category": category,
+                    },
+                )
+                row[target] = float(
+                    np.mean(ratings_by_painting[painting_number])
+                )
 
     output.parent.mkdir(parents=True, exist_ok=True)
     fieldnames = (
@@ -126,6 +150,17 @@ def build_sidhu(
             - sum(key[0] == "abstract" for key in rows),
             "representational": 240
             - sum(key[0] == "representational" for key in rows),
+        },
+        "excluded_missing_image_ids": {
+            category: [
+                painting_index + 1
+                for painting_index in range(240)
+                if resolve_sidhu_image(
+                    data_dir / f"{category.title()}_Images", painting_index
+                )
+                is None
+            ]
+            for category in ("abstract", "representational")
         },
         "manifest": str(output.resolve()),
         "released_resnet_features": (

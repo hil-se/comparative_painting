@@ -1,2 +1,2 @@
-# Preserve experiment CSV bytes so metadata SHA-256 digests remain valid.
-results/extensions/*/raw/*.csv binary
+# Result metadata records byte-level SHA-256 digests; preserve generated CSV bytes.
+results/extensions/locked_head/**/*.csv -text

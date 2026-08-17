@@ -42,10 +42,10 @@ def load_results(raw_dir: Path) -> pd.DataFrame:
                 raise ValueError(f"Invalid corrected pairwise file: {path.name}")
             selected = frame
         else:
-            if len(frame) != 210:
-                raise ValueError(f"Expected 210 rows in {path.name}")
-            # The original pairwise rows predate the elementwise loss-shape fix.
-            # Only their unaffected regression rows are valid.
+            if len(frame) not in (10, 210):
+                raise ValueError(
+                    f"Expected 10 regression rows or 210 legacy rows in {path.name}"
+                )
             selected = frame[frame["objective"] == "regression"].copy()
             if len(selected) != 10:
                 raise ValueError(f"Expected 10 regression rows in {path.name}")
@@ -77,13 +77,11 @@ def write_report(
         "",
         "## Validation and analysis unit",
         "",
-        "All 16 source files passed SHA-256 verification. The analysis uses the "
-        "80 unaffected regression fits from the first run and the 1,600 corrected "
-        "pairwise fits from the v2 rerun. The 1,600 pairwise rows from the first "
-        "run are excluded because the Keras label/prediction rank mismatch caused "
-        "cross-pair broadcasting. Comparisons are paired on condition, seed, split, "
-        "and N. Confidence intervals bootstrap the four condition-level mean "
-        "differences (20,000 resamples).",
+        "All 16 source files passed SHA-256 verification. The analysis uses 80 "
+        "regression fits and 1,600 pairwise fits generated from the corrected "
+        "manifest. Comparisons are paired on condition, seed, split, and N. "
+        "Confidence intervals bootstrap the four condition-level mean differences "
+        "(20,000 resamples).",
         "",
         "## CLIP versus ResNet-50",
         "",

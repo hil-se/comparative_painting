@@ -87,5 +87,76 @@ class ApddManifestMissingImageTests(unittest.TestCase):
         self.assertEqual(summary["annotation_decode_replacement_count"], 2)
 
 
+class SidhuManifestAlignmentTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.temporary_directory = tempfile.TemporaryDirectory()
+        self.root = Path(self.temporary_directory.name)
+        self.data = self.root / "Data"
+        self.data.mkdir()
+        (self.root / "code" / "deep_learning" / "feature").mkdir(
+            parents=True
+        )
+        for category, painting_numbers in {
+            "Abstract": (1, 3),
+            "Representational": (2, 4),
+        }.items():
+            image_dir = self.data / f"{category}_Images"
+            image_dir.mkdir()
+            for painting_number in painting_numbers:
+                (image_dir / f"{painting_number:02d}.jpg").write_bytes(b"image")
+
+        rating_files = {
+            "Abstract_All_Raters.csv": ("Beauty", (1, 3)),
+            "Abstract_Liking_All_Raters.csv": ("Liking", (1, 3)),
+            "Representational_All_Raters.csv": ("Beauty", (2, 4)),
+            "Representational_Liking_All_Raters.csv": ("Liking", (2, 4)),
+        }
+        for filename, (rating_column, painting_numbers) in rating_files.items():
+            with (self.data / filename).open(
+                "w", newline="", encoding="utf-8"
+            ) as stream:
+                writer = csv.DictWriter(
+                    stream, fieldnames=("Rater", "Painting", rating_column)
+                )
+                writer.writeheader()
+                for painting_number in painting_numbers:
+                    writer.writerow(
+                        {
+                            "Rater": 1,
+                            "Painting": f"{painting_number}.jpg",
+                            rating_column: painting_number,
+                        }
+                    )
+                    writer.writerow(
+                        {
+                            "Rater": 2,
+                            "Painting": f"{painting_number}.jpg",
+                            rating_column: painting_number + 2,
+                        }
+                    )
+
+    def tearDown(self) -> None:
+        self.temporary_directory.cleanup()
+
+    def test_original_painting_numbers_are_preserved_after_gaps(self) -> None:
+        output = self.root / "manifest.csv"
+        summary = MODULE.build_sidhu(self.root, output)
+        with output.open(newline="", encoding="utf-8") as stream:
+            rows = {row["item_id"]: row for row in csv.DictReader(stream)}
+
+        self.assertEqual(summary["rows"], 4)
+        self.assertEqual(
+            set(rows),
+            {
+                "abstract-000",
+                "abstract-002",
+                "representational-001",
+                "representational-003",
+            },
+        )
+        self.assertEqual(float(rows["abstract-002"]["beauty"]), 4.0)
+        self.assertTrue(rows["abstract-002"]["image_path"].endswith("03.jpg"))
+
+
 if __name__ == "__main__":
     unittest.main()

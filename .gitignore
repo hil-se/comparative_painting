@@ -1,4 +1,5 @@
 Transformation/
+.DS_Store
 Code/basepaper_model.py
 Results/vif_values.csv
 Results/regression_summary.txt
