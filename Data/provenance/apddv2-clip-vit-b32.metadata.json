@@ -1,0 +1,9 @@
+{
+  "dimensions": 512,
+  "manifest": "/home/xx4455/paper-projects/artifacts/comparative_painting/manifests/apddv2.csv",
+  "model": "openai/clip-vit-base-patch32",
+  "representation": "clip-vit-b32",
+  "revision": "8092f5b35a22023f7a822152e20837ac59cb91a3",
+  "rows": 10022,
+  "sha256": "2f2851d49a471bb3a5377ecf53c745769ac63400a6ac19c57f9026e3fb9a575b"
+}

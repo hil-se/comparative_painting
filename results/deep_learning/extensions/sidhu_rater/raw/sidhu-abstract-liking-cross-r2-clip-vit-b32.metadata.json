@@ -1,0 +1,43 @@
+{
+  "category": "abstract",
+  "cross_training_labels": "mean of the other four raters",
+  "dataset": "sidhu",
+  "evaluation_labels": "target rater",
+  "mode": "cross",
+  "n_values": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10
+  ],
+  "objectives": [
+    "regression",
+    "hinge",
+    "bradley_terry"
+  ],
+  "rater": 2,
+  "representation": "clip-vit-b32",
+  "rows": 210,
+  "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+  ],
+  "sha256": "43580d60b4b4549e9a3e347d9a5bddbb89b941da0e9352c2a3c608d4491f352b",
+  "split": "140 train / 20 validation / remainder test",
+  "target": "liking",
+  "training_only_standardization": true
+}

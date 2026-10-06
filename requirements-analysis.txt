@@ -1,0 +1,8 @@
+# CPU analysis and tests, verified with Python 3.12.
+numpy==1.26.4
+pandas==2.2.3
+scipy==1.13.1
+scikit-learn==1.5.2
+matplotlib==3.9.2
+Pillow==10.4.0
+statsmodels==0.14.4

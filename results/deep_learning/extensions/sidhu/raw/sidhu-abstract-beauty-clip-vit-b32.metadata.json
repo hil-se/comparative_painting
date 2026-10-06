@@ -1,0 +1,41 @@
+{
+  "category": "abstract",
+  "dataset": "sidhu",
+  "n_values": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10
+  ],
+  "objectives": [
+    "regression",
+    "hinge",
+    "bradley_terry"
+  ],
+  "pairwise_validation_affine_calibration": true,
+  "representation": "clip-vit-b32",
+  "rows": 210,
+  "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+  ],
+  "sha256": "31e1e553e47c02a37093e8c0da7f464b1a7aac5f2c91d2b274cd5674f46b9509",
+  "split": "140 train / 20 validation / remainder test",
+  "target": "beauty",
+  "tensorflow": "2.16.1",
+  "training_only_standardization": true
+}

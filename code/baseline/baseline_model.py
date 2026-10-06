@@ -7,10 +7,10 @@ Least Squares (OLS) regression using 11 handcrafted objective image features
 from Sidhu et al. (2018) to predict mean beauty and liking ratings for both
 abstract and representational paintings.
 
-The script produces the baseline values reported in Table 1 of the paper.
-No train/test split is used here; the model is fit on the full dataset and
-evaluated in-sample to establish upper-bound performance metrics (adj. R²,
-R², Pearson r, Spearman rho).
+This is the historical in-sample baseline, not the October 2026 Table 1
+held-out refit. For that analysis use code/baseline/run_sidhu_heldout_ols.py.
+No train/test split is used here; these explanatory in-sample metrics are
+not estimates of held-out performance or upper bounds for other models.
 
 Output:
     results/baseline/average_ratings/average_ratings.csv

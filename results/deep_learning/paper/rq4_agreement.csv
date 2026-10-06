@@ -1,0 +1,17 @@
+condition,method,comparison,accuracy,pairs
+Abstract_Beauty,Absolute,human_human,0.687,10
+Abstract_Beauty,Absolute,human_GT,0.394,5
+Abstract_Beauty,Comparative,human_human,0.6,10
+Abstract_Beauty,Comparative,human_GT,0.32,5
+Abstract_Liking,Absolute,human_human,0.675,10
+Abstract_Liking,Absolute,human_GT,0.45200000000000007,5
+Abstract_Liking,Comparative,human_human,0.5999999999999999,10
+Abstract_Liking,Comparative,human_GT,0.44000000000000006,5
+Repr_Beauty,Absolute,human_human,0.85,10
+Repr_Beauty,Absolute,human_GT,0.46399999999999997,5
+Repr_Beauty,Comparative,human_human,0.44000000000000006,10
+Repr_Beauty,Comparative,human_GT,0.5599999999999999,5
+Repr_Liking,Absolute,human_human,0.687,10
+Repr_Liking,Absolute,human_GT,0.304,5
+Repr_Liking,Comparative,human_human,0.44000000000000006,10
+Repr_Liking,Comparative,human_GT,0.5200000000000001,5

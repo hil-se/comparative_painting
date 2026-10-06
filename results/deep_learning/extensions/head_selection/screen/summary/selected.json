@@ -1,0 +1,59 @@
+{
+  "phase": "screen",
+  "seeds": [
+    0,
+    1,
+    2
+  ],
+  "selected_config_ids": [
+    "deep-mae-current-spearstop",
+    "shallow-mse-z-gelu-ln-rawclip",
+    "deep-huber-lr1e3-d25"
+  ],
+  "selected_configs": [
+    {
+      "activation": "relu",
+      "architecture": "deep",
+      "batch_size": 256,
+      "config_id": "deep-mae-current-spearstop",
+      "dropout": 0.25,
+      "feature_standardization": true,
+      "l2": 1e-05,
+      "learning_rate": 0.001,
+      "loss": "mae",
+      "normalization": "batch",
+      "reduce_lr": false,
+      "target_standardization": false
+    },
+    {
+      "activation": "gelu",
+      "architecture": "shallow",
+      "batch_size": 128,
+      "config_id": "shallow-mse-z-gelu-ln-rawclip",
+      "dropout": 0.1,
+      "feature_standardization": false,
+      "l2": 1e-05,
+      "learning_rate": 0.001,
+      "loss": "mse",
+      "normalization": "layer",
+      "reduce_lr": true,
+      "target_standardization": true
+    },
+    {
+      "activation": "relu",
+      "architecture": "deep",
+      "batch_size": 256,
+      "config_id": "deep-huber-lr1e3-d25",
+      "dropout": 0.25,
+      "feature_standardization": true,
+      "l2": 1e-05,
+      "learning_rate": 0.001,
+      "loss": "huber",
+      "normalization": "batch",
+      "reduce_lr": true,
+      "target_standardization": false
+    }
+  ],
+  "selection_metric": "unweighted macro validation Spearman",
+  "top_k": 3
+}
