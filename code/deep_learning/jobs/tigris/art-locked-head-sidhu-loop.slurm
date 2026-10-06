@@ -49,7 +49,7 @@ sleep $((SLURM_ARRAY_TASK_ID % 4 * 5))
 if [[ -f "${output}" && -f "${output%.csv}.metadata.json" ]] \
     && jq -e '.method_id == "shallow-mse-z-gelu-ln-rawclip"' \
         "${output%.csv}.metadata.json" >/dev/null \
-    && python code/extensions/validate_art_result.py "${output}" \
+    && python code/deep_learning/validate_art_result.py "${output}" \
         --expected-rows "${expected_rows}" \
         --expected-dataset sidhu \
         --expected-representation "${representation}" \
@@ -63,7 +63,7 @@ if [[ -f "${output}" && -f "${output%.csv}.metadata.json" ]] \
     exit 0
 fi
 
-python code/extensions/run_art_locked_head.py \
+python code/deep_learning/run_art_locked_head.py \
     --manifest "${input_root}/manifests/sidhu.csv" \
     --features "${input_root}/features/sidhu-${representation}.npz" \
     --dataset sidhu \
@@ -78,7 +78,7 @@ python code/extensions/run_art_locked_head.py \
     --patience 20 \
     --output "${output}"
 
-python code/extensions/validate_art_result.py "${output}" \
+python code/deep_learning/validate_art_result.py "${output}" \
     --expected-rows "${expected_rows}" \
     --expected-dataset sidhu \
     --expected-representation "${representation}" \

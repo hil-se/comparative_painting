@@ -12,5 +12,5 @@ jobs:
           cache-dependency-path: requirements-analysis.txt
       - run: pip install -r requirements-analysis.txt
       - run: python -m unittest discover -s tests -v
-      - run: python code/extensions/run_sidhu_heldout_ols.py --output-dir build/heldout_ols
-      - run: python code/extensions/reproduce_art_paper.py --output-dir build/paper
+      - run: python code/baseline/run_sidhu_heldout_ols.py --output-dir build/heldout_ols
+      - run: python code/deep_learning/reproduce_art_paper.py --output-dir build/paper

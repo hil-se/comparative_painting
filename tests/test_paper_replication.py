@@ -9,7 +9,8 @@ import pandas as pd
 from scipy.stats import wilcoxon
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "code/extensions"))
+sys.path.insert(0, str(ROOT / "code/deep_learning"))
+sys.path.insert(0, str(ROOT / "code/baseline"))
 sys.path.insert(0, str(ROOT / "code/human_survey"))
 
 from manuscript_statistical_tests import exact_wilcoxon, matched_test, holm

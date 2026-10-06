@@ -15,7 +15,7 @@ used in the controlled runs. Its original metadata and SHA-256 are included;
 the historical cluster paths in that metadata describe its provenance.
 `provenance/` records the original APDDv2 feature hashes. APDDv2 images and
 feature arrays are obtained/prepared separately as described in
-`../docs/replication.md`.
+the [replication guide](../code/deep_learning/README.md).
 
 ## External Data (Sidhu et al., 2018)
 

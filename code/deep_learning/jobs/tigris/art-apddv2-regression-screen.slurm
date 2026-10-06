@@ -43,7 +43,7 @@ output_root="${artifact_root}/tuning/apddv2-regression/screen"
 mkdir -p "${output_root}/raw"
 cd "${SLURM_SUBMIT_DIR}"
 
-python code/extensions/tune_apddv2_regression.py \
+python code/deep_learning/tune_apddv2_regression.py \
     --phase screen \
     --manifest "${artifact_root}/manifests/apddv2.csv" \
     --features "${artifact_root}/features/apddv2-clip-vit-b32.npz" \

@@ -32,7 +32,7 @@ OBJECTIVE_BUDGETS = {("regression", 0)} | set(itertools.product(("hinge", "bradl
 
 def load_final_results(root: Path) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """Verify hashes and the full matrix, rather than silently pairing a subset."""
-    base = root / "results/extensions/locked_head"
+    base = root / "results/deep_learning/extensions/locked_head"
     frames = []
     for directory, files, rows in ((base / "aggregate_merged/sidhu", 16, 1680),
                                    (base / "aggregate_merged/apddv2", 22, 4620),
@@ -74,7 +74,7 @@ def load_final_results(root: Path) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataF
 
 
 def verify_selection(root: Path, output: Path) -> dict:
-    base = root / "results/extensions/head_selection"
+    base = root / "results/deep_learning/extensions/head_selection"
     selected = base / "screen/summary/selected.json"
     winner = json.loads((base / "confirm/summary/winner.json").read_text())
     from run_art_locked_head import LOCKED_METHOD_ID
@@ -199,13 +199,13 @@ def human_summary(root: Path, output: Path) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--repository", type=Path, default=ROOT)
-    parser.add_argument("--output-dir", type=Path, default=ROOT / "results/paper")
+    parser.add_argument("--output-dir", type=Path, default=ROOT / "results/deep_learning/paper")
     args = parser.parse_args()
     root, output = args.repository.resolve(), args.output_dir.resolve()
     output.mkdir(parents=True, exist_ok=True)
     sidhu, apdd, rater = load_final_results(root)
     selection = verify_selection(root, output)
-    ols_path = root / "results/extensions/heldout_ols/metrics.csv"
+    ols_path = root / "results/baseline/heldout_ols/metrics.csv"
     metadata = json.loads(ols_path.with_suffix(".metadata.json").read_text())
     if hashlib.sha256(ols_path.read_bytes()).hexdigest() != metadata["sha256"]:
         raise ValueError("OLS result hash mismatch")

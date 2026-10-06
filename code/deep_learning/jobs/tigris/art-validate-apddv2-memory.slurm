@@ -20,7 +20,7 @@ export PYTHONUNBUFFERED=1
 artifact_root=/home/xx4455/paper-projects/artifacts/comparative_painting
 cd "${SLURM_SUBMIT_DIR}"
 
-python code/extensions/run_art_extensions.py \
+python code/deep_learning/run_art_extensions.py \
     --manifest "${artifact_root}/manifests/apddv2.csv" \
     --features "${artifact_root}/features/apddv2-resnet50.npz" \
     --dataset apddv2 \

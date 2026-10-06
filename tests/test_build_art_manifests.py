@@ -11,7 +11,7 @@ from pathlib import Path
 MODULE_PATH = (
     Path(__file__).resolve().parents[1]
     / "code"
-    / "extensions"
+    / "deep_learning"
     / "build_art_manifests.py"
 )
 SPEC = importlib.util.spec_from_file_location("build_art_manifests", MODULE_PATH)

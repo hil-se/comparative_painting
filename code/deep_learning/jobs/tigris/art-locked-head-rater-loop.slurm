@@ -52,7 +52,7 @@ for seed in {0..9}; do
     if [[ -f "${output}" && -f "${output%.csv}.metadata.json" ]] \
         && jq -e '.method_id == "shallow-mse-z-gelu-ln-rawclip"' \
             "${output%.csv}.metadata.json" >/dev/null \
-        && python code/extensions/validate_art_result.py "${output}" \
+        && python code/deep_learning/validate_art_result.py "${output}" \
             --expected-rows "${expected_rows}" \
             --expected-dataset sidhu \
             --expected-representation clip-vit-b32 \
@@ -67,7 +67,7 @@ for seed in {0..9}; do
         continue
     fi
 
-    python code/extensions/run_sidhu_rater_locked_head.py \
+    python code/deep_learning/run_sidhu_rater_locked_head.py \
         --features "${input_root}/features/sidhu-clip-vit-b32.npz" \
         --data-dir Data \
         --category "${category}" \
@@ -82,7 +82,7 @@ for seed in {0..9}; do
         --patience 20 \
         --output "${output}"
 
-    python code/extensions/validate_art_result.py "${output}" \
+    python code/deep_learning/validate_art_result.py "${output}" \
         --expected-rows "${expected_rows}" \
         --expected-dataset sidhu \
         --expected-representation clip-vit-b32 \

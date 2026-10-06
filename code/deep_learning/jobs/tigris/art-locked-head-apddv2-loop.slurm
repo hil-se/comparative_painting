@@ -63,7 +63,7 @@ sleep $((SLURM_ARRAY_TASK_ID % 4 * 5))
 if [[ -f "${output}" && -f "${output%.csv}.metadata.json" ]] \
     && jq -e '.method_id == "shallow-mse-z-gelu-ln-rawclip"' \
         "${output%.csv}.metadata.json" >/dev/null \
-    && python code/extensions/validate_art_result.py "${output}" \
+    && python code/deep_learning/validate_art_result.py "${output}" \
         --expected-rows "${expected_rows}" \
         --expected-dataset apddv2 \
         --expected-representation "${representation}" \
@@ -77,7 +77,7 @@ if [[ -f "${output}" && -f "${output%.csv}.metadata.json" ]] \
     exit 0
 fi
 
-python code/extensions/run_art_locked_head.py \
+python code/deep_learning/run_art_locked_head.py \
     --manifest "${input_root}/manifests/apddv2.csv" \
     --features "${input_root}/features/apddv2-${representation}.npz" \
     --dataset apddv2 \
@@ -91,7 +91,7 @@ python code/extensions/run_art_locked_head.py \
     --patience 20 \
     --output "${output}"
 
-python code/extensions/validate_art_result.py "${output}" \
+python code/deep_learning/validate_art_result.py "${output}" \
     --expected-rows "${expected_rows}" \
     --expected-dataset apddv2 \
     --expected-representation "${representation}" \

@@ -13,7 +13,7 @@ from pathlib import Path
 MODULE_PATH = (
     Path(__file__).resolve().parents[1]
     / "code"
-    / "extensions"
+    / "deep_learning"
     / "validate_art_result.py"
 )
 SPEC = importlib.util.spec_from_file_location("validate_art_result", MODULE_PATH)

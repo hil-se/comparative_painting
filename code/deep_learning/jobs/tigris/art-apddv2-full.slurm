@@ -62,7 +62,7 @@ checkpoints="${artifact_root}/checkpoints/apddv2-${slug}-${representation}"
 mkdir -p "${artifact_root}/results" "${checkpoints}"
 cd "${SLURM_SUBMIT_DIR}"
 
-python code/extensions/run_art_extensions.py \
+python code/deep_learning/run_art_extensions.py \
     --manifest "${manifest}" \
     --features "${features}" \
     --dataset apddv2 \

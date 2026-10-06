@@ -19,7 +19,7 @@ artifact_root=/home/xx4455/paper-projects/artifacts/comparative_painting
 tuning_root="${artifact_root}/tuning/apddv2-regression"
 cd "${SLURM_SUBMIT_DIR}"
 
-python code/extensions/summarize_apddv2_regression_tuning.py \
+python code/deep_learning/summarize_apddv2_regression_tuning.py \
     --phase confirm \
     --input-dir "${tuning_root}/confirm/raw" \
     --output-dir "${tuning_root}/confirm/summary" \

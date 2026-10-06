@@ -2,7 +2,7 @@
 #SBATCH --clusters=tigris
 #SBATCH --partition=tigris
 #SBATCH --account=rc-onboard
-#SBATCH --job-name=art-sidhu-full
+#SBATCH --job-name=art-sidhu-pairwise-v2
 #SBATCH --array=0-7
 #SBATCH --gres=gpu:gh200:1
 #SBATCH --cpus-per-task=4
@@ -10,8 +10,8 @@
 #SBATCH --time=12:00:00
 #SBATCH --mail-user=slack:@xx4455
 #SBATCH --mail-type=ALL
-#SBATCH --output=/home/xx4455/paper-projects/logs/art-sidhu-full-%A_%a.out
-#SBATCH --error=/home/xx4455/paper-projects/logs/art-sidhu-full-%A_%a.err
+#SBATCH --output=/home/xx4455/paper-projects/logs/art-sidhu-pairwise-v2-%A_%a.out
+#SBATCH --error=/home/xx4455/paper-projects/logs/art-sidhu-pairwise-v2-%A_%a.err
 
 set -euo pipefail
 
@@ -26,23 +26,22 @@ target="${targets[${SLURM_ARRAY_TASK_ID}]}"
 representation="${representations[${SLURM_ARRAY_TASK_ID}]}"
 manifest="${artifact_root}/manifests/sidhu.csv"
 features="${artifact_root}/features/sidhu-${representation}.npz"
-output="${artifact_root}/results/sidhu-${category}-${target}-${representation}.csv"
-checkpoints="${artifact_root}/checkpoints/sidhu-${category}-${target}-${representation}"
+output="${artifact_root}/results/sidhu-${category}-${target}-${representation}-pairwise-v2.csv"
+checkpoints="${artifact_root}/checkpoints/sidhu-${category}-${target}-${representation}-pairwise-v2"
 
 mkdir -p "${artifact_root}/results" "${checkpoints}"
 cd "${SLURM_SUBMIT_DIR}"
 
-python code/extensions/run_art_extensions.py \
+python code/deep_learning/run_art_extensions.py \
     --manifest "${manifest}" \
     --features "${features}" \
     --dataset sidhu \
     --representation "${representation}" \
     --category "${category}" \
     --target "${target}" \
-    --objectives regression,hinge,bradley_terry \
+    --objectives hinge,bradley_terry \
     --n-values 1-10 \
     --seeds 0-9 \
-    --epochs-regression 200 \
     --epochs-pairwise 100 \
     --batch-size 32 \
     --output "${output}" \

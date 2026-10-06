@@ -16,7 +16,7 @@ from PIL import Image
 MODULE_PATH = (
     Path(__file__).resolve().parents[1]
     / "code"
-    / "extensions"
+    / "deep_learning"
     / "extract_art_features.py"
 )
 SPEC = importlib.util.spec_from_file_location("extract_art_features", MODULE_PATH)

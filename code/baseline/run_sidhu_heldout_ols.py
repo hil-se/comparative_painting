@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import sys
 from pathlib import Path
 
 import numpy as np
@@ -19,10 +20,12 @@ from PIL import Image
 from scipy.stats import spearmanr
 import statsmodels.api as sm
 
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "code/deep_learning"))
+
 from build_art_manifests import resolve_sidhu_image, SIDHU_RATING_FILES
 from run_art_extensions import parse_range, split_indices
 
-ROOT = Path(__file__).resolve().parents[2]
 PREDICTORS = (
     "HueSD", "Saturation", "SaturationSD", "Brightness", "BrightnessSD",
     "Entropy", "StraightEdgeDensity", "NonStraightEdgeDensity",
@@ -130,7 +133,7 @@ def main() -> None:
     parser.add_argument("--repository", type=Path, default=ROOT)
     parser.add_argument("--seeds", default="0-9")
     parser.add_argument("--output-dir", type=Path,
-                        default=ROOT / "results/extensions/heldout_ols")
+                        default=ROOT / "results/baseline/heldout_ols")
     args = parser.parse_args()
     rows, predictions, audits = [], [], {}
     for category in ("abstract", "representational"):

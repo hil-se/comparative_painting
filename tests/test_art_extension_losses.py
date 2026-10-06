@@ -14,7 +14,7 @@ if TENSORFLOW_AVAILABLE:
     module_path = (
         Path(__file__).resolve().parents[1]
         / "code"
-        / "extensions"
+        / "deep_learning"
         / "run_art_extensions.py"
     )
     spec = importlib.util.spec_from_file_location(

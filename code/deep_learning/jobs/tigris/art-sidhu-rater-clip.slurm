@@ -35,7 +35,7 @@ checkpoints="${artifact_root}/checkpoints/rater/${category}-${target}-${mode}-r$
 mkdir -p "${artifact_root}/results/rater" "${checkpoints}"
 cd "${SLURM_SUBMIT_DIR}"
 
-python code/extensions/run_sidhu_rater_extensions.py \
+python code/deep_learning/run_sidhu_rater_extensions.py \
     --features "${artifact_root}/features/sidhu-clip-vit-b32.npz" \
     --data-dir Data \
     --category "${category}" \

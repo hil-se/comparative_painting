@@ -1,20 +1,20 @@
-# Reproducing the October 2026 revision
+# Reproducing the October 2026 Revision
 
 Paper: *Comparative Learning for Art Aesthetics: Representation, Scale, and
-Annotation Efficiency*. The controlled experiment archive comes from
-`agent/clip-bt-apddv2`, commit `860c8353cff653aff63dcbd11ee124c712e3ce28`.
+Annotation Efficiency*. The controlled experiment archive is preserved in
+[commit 860c8353](https://github.com/hil-se/comparative_painting/commit/860c8353cff653aff63dcbd11ee124c712e3ce28).
 The screening/confirmation records and Sidhu CLIP bundle were recovered
 from the original cluster archive on October 6, 2026. The held-out OLS
 runner was reconstructed from the released predictors and the current
 manuscript's protocol; it is not claimed to be the recovered October 1 code.
 
-## Analysis without retraining
+## Analysis Without Retraining
 
 Install `requirements-analysis.txt` with Python 3.12, then run:
 
 ```bash
-python code/extensions/run_sidhu_heldout_ols.py
-python code/extensions/reproduce_art_paper.py
+python code/baseline/run_sidhu_heldout_ols.py
+python code/deep_learning/reproduce_art_paper.py
 ```
 
 Both scripts find the repository from their own locations and accept
@@ -22,10 +22,10 @@ Both scripts find the repository from their own locations and accept
 `locked_head` directories exclusively. Historical extension and original
 deep-learning results elsewhere in the repository are not mixed into it.
 
-| Paper evidence | Source | Regenerated output under `results/paper/` |
+| Paper evidence | Source | Regenerated output under `results/deep_learning/paper/` |
 |---|---|---|
 | RQ1 regression | `locked_head/aggregate_merged/{sidhu,apddv2}` | `rq1_sidhu_regression.csv`, `rq1_apdd_regression.csv` |
-| Held-out OLS and sensitivity | `Data/*_Data.csv`, raw rater tables, available images | `../extensions/heldout_ols/{metrics,predictions,summary}.csv` |
+| Held-out OLS and sensitivity | `Data/*_Data.csv`, raw rater tables, available images | `results/baseline/heldout_ols/{metrics,predictions,summary}.csv` (from repository root) |
 | RQ1 nine-contrast Holm family | Neural regression rows plus imputed OLS | `rq1_tests.csv` |
 | RQ2 N=1/N=10 focal tests | CLIP aggregate rows, macro-average within seed | `rq2_focal_tests.csv` |
 | RQ2 full N=1--10 sweep | Same rows, 20 contrasts per dataset | `rq2_sweep_tests.csv`, `rq2_budget_curve.csv` |
@@ -35,7 +35,10 @@ deep-learning results elsewhere in the repository are not mixed into it.
 | Human agreement | Released `results/human_survey/survey_data` | `rq4_matrices/`, `rq4_agreement.csv` |
 | Human timing | Raw Qualtrics export | `rq4_timing.csv`, `rq4_source_counts.json` |
 
-Source paths in the first seven rows are relative to `results/extensions/`.
+Neural-result and head-selection paths are relative to
+`results/deep_learning/extensions/`. Other source paths are relative to the
+repository root. Archived CSVs and metadata keep their original bytes and
+cluster provenance after the directory moves.
 The figures are `art_clip_n_sweep.{png,pdf}` and
 `art_rater_n_sweep.{png,pdf}`. Bands use the sample SD of ten seed-level
 macro averages; conditions, targets and raters are averaged within each seed.
@@ -50,7 +53,7 @@ RQ2 focal tests correct three contrasts separately per dataset and budget;
 RQ2 sweep tests correct 20 contrasts separately per dataset. RQ3 remains
 descriptive.
 
-## OLS provenance and leakage checks
+## OLS Provenance and Leakage Checks
 
 The representational predictor CSV labels its 238 rows consecutively. The
 runner restores the original painting IDs by excluding missing images 90
@@ -68,7 +71,7 @@ These reproduce the paper's 0.339/0.382/0.408/0.485. Complete-case abstract
 means are 0.345914 and 0.387246. All nine RQ1 contrasts give Holm
 `p=0.017578125`.
 
-## Prepare inputs for neural training
+## Prepare Inputs for Neural Training
 
 The analysis environment is a tested CPU environment, not a recovered lock
 of the original cluster. Install `requirements-training.txt` for the neural
@@ -80,7 +83,7 @@ new neural fits. Archived result regeneration is independent of those fits.
 Prepare Sidhu from the repository:
 
 ```bash
-python code/extensions/build_art_manifests.py --dataset sidhu \
+python code/deep_learning/build_art_manifests.py --dataset sidhu \
   --output build/manifests/sidhu.csv \
   --resnet-output build/features/sidhu-resnet50.npz
 ```
@@ -98,13 +101,13 @@ The authors specify CC BY-NC-ND 4.0. Dataset files are obtained from that
 source rather than redistributed here. Prepare them with:
 
 ```bash
-python code/extensions/build_art_manifests.py --dataset apddv2 \
+python code/deep_learning/build_art_manifests.py --dataset apddv2 \
   --annotations /path/to/APDDv2-10023.csv --images /path/to/images \
   --max-missing-images 1 --output build/manifests/apddv2.csv
-python code/extensions/extract_art_features.py \
+python code/deep_learning/extract_art_features.py \
   --manifest build/manifests/apddv2.csv --representation clip-vit-b32 \
   --output build/features/apddv2-clip-vit-b32.npz --batch-size 64
-python code/extensions/extract_art_features.py \
+python code/deep_learning/extract_art_features.py \
   --manifest build/manifests/apddv2.csv --representation resnet50 \
   --output build/features/apddv2-resnet50.npz --batch-size 64
 ```
@@ -116,9 +119,10 @@ manifest hashes include absolute cluster paths and will differ when a
 manifest is rebuilt locally. Item IDs, labels and feature alignment remain
 the matching criteria; do not overwrite original provenance hashes.
 
-## Run the controlled models
+## Run the Controlled Models
 
-The README gives a complete aggregate Sidhu command. Repeat it for both
+The [repository README](../../README.md) gives a complete aggregate Sidhu
+command. Repeat it for both
 painting categories, both targets, and both representations. Use the
 released legacy ResNet features for Sidhu; freshly extracting standardized
 ResNet features would change the reported protocol. For APDDv2, use
@@ -129,7 +133,7 @@ use seeds 0--9 and N=1--10 by default.
 Rater-level example:
 
 ```bash
-python code/extensions/run_sidhu_rater_locked_head.py \
+python code/deep_learning/run_sidhu_rater_locked_head.py \
   --features Data/fixed_features/sidhu-clip-vit-b32.npz --data-dir Data \
   --category abstract --target beauty --mode within --rater 1 \
   --objectives regression,hinge,bradley_terry --n-values 1-10 --seeds 0-9 \
@@ -138,7 +142,7 @@ python code/extensions/run_sidhu_rater_locked_head.py \
 
 Repeat for `within` and `cross`, raters 1--5, both categories and both
 targets. The shared head remains locked; a new run is not used to retune it.
-Cluster jobs in `jobs/tigris/` retain their historical account and paths;
+Cluster jobs in `code/deep_learning/jobs/tigris/` retain their historical account and paths;
 the Python commands above do not depend on those cluster settings.
 
 The original pair sampler shuffles anchors and eligible partners, rejecting
@@ -147,7 +151,7 @@ pairs. Every archived pairwise fit reached `N * train_examples`; the
 implementation allows shortfalls when eligible partners are exhausted.
 The repository documents this behavior and preserves the experimental code.
 
-## Human-study accounting
+## Human Study Accounting
 
 The raw file has seven finished entries, one marked Survey Preview. After
 excluding the preview there are six completed responses. The timing filter

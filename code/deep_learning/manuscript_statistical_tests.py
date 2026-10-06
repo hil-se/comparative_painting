@@ -147,8 +147,9 @@ def write_csv(path: Path, rows: list[dict]) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--results-root", type=Path, default=ROOT / "results/extensions")
-    parser.add_argument("--output-dir", type=Path, default=ROOT / "results/paper")
+    parser.add_argument("--results-root", type=Path, default=ROOT / "results/deep_learning/extensions")
+    parser.add_argument("--ols-results", type=Path, default=ROOT / "results/baseline/heldout_ols/metrics.csv")
+    parser.add_argument("--output-dir", type=Path, default=ROOT / "results/deep_learning/paper")
     args = parser.parse_args()
     merged = args.results_root / "locked_head/aggregate_merged"
     def read_directory(path):
@@ -157,8 +158,7 @@ def main() -> None:
             with source.open(newline="", encoding="utf-8") as stream:
                 rows.extend(csv.DictReader(stream))
         return rows
-    ols_path = args.results_root / "heldout_ols/metrics.csv"
-    with ols_path.open(newline="", encoding="utf-8") as stream:
+    with args.ols_results.open(newline="", encoding="utf-8") as stream:
         ols = list(csv.DictReader(stream))
     output = compute_tests(read_directory(merged / "sidhu"),
                            read_directory(merged / "apddv2"), ols)

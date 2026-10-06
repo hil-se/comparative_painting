@@ -8,7 +8,7 @@ from Sidhu et al. (2018) to predict mean beauty and liking ratings for both
 abstract and representational paintings.
 
 This is the historical in-sample baseline, not the October 2026 Table 1
-held-out refit. For that analysis use code/extensions/run_sidhu_heldout_ols.py.
+held-out refit. For that analysis use code/baseline/run_sidhu_heldout_ols.py.
 No train/test split is used here; these explanatory in-sample metrics are
 not estimates of held-out performance or upper bounds for other models.
 
