@@ -1,10 +1,35 @@
-# Modeling Art Evaluations from Comparative Judgments
+# Comparative Learning for Art Aesthetics
 
-Replication package for *Modeling Art Evaluations from Comparative
-Judgments: A Deep Learning Approach to Predicting Aesthetic Preferences*.
+Replication package for *Comparative Learning for Art Aesthetics:
+Representation, Scale, and Annotation Efficiency* (IEEE Access revision,
+October 2026).
 
 Authors: Manoj Reddy Bethi, Xiaoyin Xi, Sai Rupa Jhade, Pravallika Yaganti,
 Monoshiz Mahbub Khan, and Zhe Yu.
+
+## Reproduce the paper analyses on a CPU
+
+Use Python 3.12 from a clean checkout:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements-analysis.txt
+python code/extensions/run_sidhu_heldout_ols.py
+python code/extensions/reproduce_art_paper.py
+python -m unittest discover -s tests -v
+```
+
+The OLS runner audits 474 predictor/image joins, restores original painting
+IDs, and reproduces the held-out baseline and complete-case sensitivity.
+The analysis runner verifies all 78 final neural-result CSVs and their
+metadata (14,700 fits), validates the recovered head-selection evidence,
+and writes RQ1--RQ4 tables, all 61 statistical contrasts, and budget figures
+to `results/paper/`. It requires no cluster access or APDDv2 image download.
+TensorFlow-specific tests run when the training dependencies are installed.
+
+See [the replication guide](docs/replication.md) for the table-to-source map,
+external data preparation, full training commands, and provenance limits.
 
 ## Controlled study
 
@@ -14,7 +39,7 @@ data and then locked for every dataset, target, objective, rater, and seed.
 
 - Datasets: four Sidhu conditions and all 11 APDDv2 targets.
 - Splits: Sidhu uses 140 training images, 20 validation images, and the
-  remainder for testing; APDDv2 uses deterministic 70/15/15 splits.
+  remainder for testing; APDDv2 uses 70/15/15 splits re-randomized per seed.
 - Head: `256 -> 64 -> 1`, GELU, LayerNorm, dropout 0.1, and L2 weight decay
   `1e-5`.
 - Features: raw fixed extractor outputs; no additional feature
@@ -27,6 +52,11 @@ data and then locked for every dataset, target, objective, rater, and seed.
   20, and learning-rate halving after 10 plateaus.
 - Selection: the locked head was chosen from 22 configurations using APDDv2
   validation macro Spearman. Test data were not used for selection.
+
+Recovered screening and confirmation CSVs, sidecars, rankings, and selection
+records are in `results/extensions/head_selection/`. The screen used seeds
+0--2; the top three configurations were confirmed using seeds 0--9. The
+winner's validation macro Spearman is 0.77719858.
 
 The authoritative implementation is
 `code/extensions/run_art_locked_head.py`, with rater-level evaluation in
@@ -54,12 +84,22 @@ comparative_painting/
 
 ## Reproducing one locked-head run
 
-Prepared manifests and fixed-feature files are required. For example:
+Install `requirements-training.txt` first. Prepare Sidhu from the bundled
+images, released ResNet arrays, and recovered CLIP feature bundle:
+
+```bash
+python code/extensions/build_art_manifests.py \
+  --dataset sidhu \
+  --output build/manifests/sidhu.csv \
+  --resnet-output build/features/sidhu-resnet50.npz
+```
+
+For example:
 
 ```bash
 python code/extensions/run_art_locked_head.py \
-  --manifest /path/to/manifests/sidhu.csv \
-  --features /path/to/features/sidhu-clip-vit-b32.npz \
+  --manifest build/manifests/sidhu.csv \
+  --features Data/fixed_features/sidhu-clip-vit-b32.npz \
   --dataset sidhu \
   --representation clip-vit-b32 \
   --category abstract \
@@ -102,10 +142,15 @@ At `N=1`, rater-level Spearman ranges from 0.208 to 0.413 within rater and
 from 0.011 to 0.391 across raters. Within-rater prediction remains stronger,
 and cross-rater Abstract Liking is near zero.
 
-The human study retained five raters after seven completed responses; two
-were excluded for insufficient response variance. Comparative judgments took
-about 10.71 seconds per item versus 27.28 seconds for direct ratings, a 60%
-average reduction.
+The released raw survey export has seven finished entries, including one
+preview, leaving six completed non-preview responses. The timing filter
+removes one constant-response rater and retains five. The manuscript's
+agreement panel uses R1, R3, R4, R5, and R6; the repository columns are P1,
+P3, P4, P5, and P6. Human-to-human agreement averages ten unique pairs and
+excludes GT: 0.725 for direct ratings and 0.520 for comparisons. Timing is
+about 10.71 seconds for comparisons versus 27.28 seconds for direct ratings
+when reproducing the paper's averaging of rounded condition means. Full
+precision timing values are also exported.
 
 ## Data
 

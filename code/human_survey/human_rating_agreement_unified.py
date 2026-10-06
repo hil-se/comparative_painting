@@ -29,6 +29,8 @@ def generate_pairs_comparative(x1, x2):
     n = len(x1)
     pairs = {"A": [], "B": [], "agree": []}
     for i in range(n):
+        if x1.iloc[i] not in ('A', 'B') or x2.iloc[i] not in ('A', 'B'):
+            continue
         choice1 = 1 if x1.iloc[i] == 'A' else -1
         choice2 = 1 if x2.iloc[i] == 'A' else -1
         pairs["A"].append(choice1)
@@ -58,9 +60,15 @@ def acc_kappa(pairs):
 
 def create_gt_comparative_column(df):
     """Create a GT column for comparative data"""
+    candidates = [('GT_A', 'GT_B'), ('GT_A_Beauty', 'GT_B_Beauty'),
+                  ('GT_A_Liking', 'GT_B_Liking')]
+    available = [(a, b) for a, b in candidates if a in df.columns and b in df.columns]
+    if len(available) != 1:
+        raise ValueError('Expected exactly one pair of comparative GT score columns')
+    column_a, column_b = available[0]
     def compare_gt(row):
-        if row['GT_A'] > row['GT_B']: return 'A'
-        elif row['GT_B'] > row['GT_A']: return 'B'
+        if row[column_a] > row[column_b]: return 'A'
+        elif row[column_b] > row[column_a]: return 'B'
         else: return None
     
     df['GT'] = df.apply(compare_gt, axis=1)
@@ -74,7 +82,7 @@ def analyze_ratings(input_file, output_file, summary_file, rating_type='absolute
     df = pd.read_csv(input_file)
     
     # Pre-processing for comparative GT
-    if rating_type == 'comparative' and 'GT_A' in df.columns and 'GT_B' in df.columns:
+    if rating_type == 'comparative' and any(c.startswith('GT_A') for c in df.columns):
         df = create_gt_comparative_column(df)
         df = df[df['GT'].notna()]
     

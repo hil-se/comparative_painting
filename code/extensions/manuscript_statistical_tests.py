@@ -1,4 +1,4 @@
-"""Reproduce the matched-seed tests reported in the two manuscripts.
+"""Reproduce all matched-seed tests for the Art Eval manuscript.
 
 The implementation uses an exact two-sided Wilcoxon signed-rank permutation
 test so the calculation has no optional SciPy dependency.
@@ -6,22 +6,15 @@ test so the calculation has no optional SciPy dependency.
 
 from __future__ import annotations
 
+import argparse
 import csv
-import glob
+import math
 import itertools
 from collections import defaultdict
 from pathlib import Path
 
 
-ROOT = Path(__file__).resolve().parents[3]
-
-
-def read_rows(pattern: str) -> list[dict[str, str]]:
-    rows: list[dict[str, str]] = []
-    for name in sorted(glob.glob(str(ROOT / pattern))):
-        with open(name, newline="", encoding="utf-8") as stream:
-            rows.extend(csv.DictReader(stream))
-    return rows
+ROOT = Path(__file__).resolve().parents[2]
 
 
 def mean(values: list[float]) -> float:
@@ -44,7 +37,14 @@ def average_ranks(values: list[float]) -> list[float]:
 
 
 def exact_wilcoxon(left: list[float], right: list[float]) -> tuple[float, float, int]:
-    differences = [a - b for a, b in zip(left, right) if a != b]
+    if len(left) != len(right) or not left:
+        raise ValueError("Paired tests require equally sized, nonempty samples")
+    all_differences = [a - b for a, b in zip(left, right, strict=True)]
+    if not all(math.isfinite(value) for value in all_differences):
+        raise ValueError("Paired tests require finite observations")
+    differences = [value for value in all_differences if value != 0]
+    if not differences:
+        return 1.0, 0.0, 0
     ranks = average_ranks([abs(value) for value in differences])
     observed = sum(rank for rank, value in zip(ranks, differences) if value > 0)
     total = sum(ranks)
@@ -55,7 +55,7 @@ def exact_wilcoxon(left: list[float], right: list[float]) -> tuple[float, float,
         positive = sum(rank for rank, sign in zip(ranks, signs) if sign)
         if abs(positive - total / 2) >= distance - 1e-12:
             extreme += 1
-    return min(1.0, extreme / permutations), mean(differences), len(differences)
+    return min(1.0, extreme / permutations), mean(all_differences), len(differences)
 
 
 def holm(raw: list[float]) -> list[float]:
@@ -69,98 +69,103 @@ def holm(raw: list[float]) -> list[float]:
     return adjusted
 
 
-def aggregate(rows: list[dict[str, str]], selector) -> dict[str, dict[int, float]]:
-    values: dict[str, dict[int, list[float]]] = defaultdict(lambda: defaultdict(list))
-    for row in rows:
-        group = selector(row)
-        if group is not None:
-            values[group][int(row["seed"])].append(float(row["spearman"]))
-    return {
-        group: {seed: mean(entries) for seed, entries in seed_values.items()}
-        for group, seed_values in values.items()
-    }
+def matched_test(label: str, left: dict[int, float], right: dict[int, float]) -> dict:
+    expected = set(range(10))
+    if set(left) != expected or set(right) != expected:
+        raise ValueError(f"{label}: expected exactly ten matched seeds 0-9")
+    p_value, delta, nonzero = exact_wilcoxon(
+        [left[i] for i in range(10)], [right[i] for i in range(10)])
+    return {"contrast": label, "mean_difference": delta, "p_raw": p_value,
+            "n_seeds": 10, "n_nonzero": nonzero}
 
 
-def report_art(dataset: str, rows: list[dict[str, str]]) -> None:
-    aggregated = aggregate(
-        rows,
-        lambda row: row["objective"]
-        if row["representation"] == "clip-vit-b32"
-        and (
-            row["objective"] == "regression"
-            or (row["N"] != "" and float(row["N"]) == 10)
-        )
-        else None,
-    )
-    comparisons = [
-        ("Hinge - regression", "hinge", "regression"),
-        ("BT - regression", "bradley_terry", "regression"),
-        ("BT - hinge", "bradley_terry", "hinge"),
-    ]
-    raw = []
-    details = []
-    for label, left_name, right_name in comparisons:
-        seeds = sorted(set(aggregated[left_name]) & set(aggregated[right_name]))
-        left = [aggregated[left_name][seed] for seed in seeds]
-        right = [aggregated[right_name][seed] for seed in seeds]
-        p_value, delta, nonzero = exact_wilcoxon(left, right)
-        raw.append(p_value)
-        details.append((label, delta, p_value, nonzero))
-    adjusted = holm(raw)
-    print(dataset)
-    for (label, delta, p_value, nonzero), corrected in zip(details, adjusted):
-        print(
-            f"  {label}: mean difference={delta:+.6f}, "
-            f"Wilcoxon p={p_value:.6f}, Holm p={corrected:.6f}, n={nonzero}"
-        )
+def correct_family(tests: list[dict]) -> list[dict]:
+    for test, adjusted in zip(tests, holm([t["p_raw"] for t in tests]), strict=True):
+        test["p_holm"] = adjusted
+    return tests
 
 
-def report_image() -> None:
-    rows = read_rows("tmp/image-caption-extension-53692c0/*-vilbert.csv")
-    tests = []
-    for dataset in ("FlickrExpert", "VICR"):
-        by_objective: dict[str, dict[int, float]] = defaultdict(dict)
-        for row in rows:
-            if row["dataset"] == dataset and row["pair_condition"] == "same_image":
-                by_objective[row["objective"]][int(row["seed"])] = float(
-                    row["same_image_accuracy"]
-                )
-        seeds = sorted(
-            set(by_objective["bradley_terry"]) & set(by_objective["hinge"])
-        )
-        bt = [by_objective["bradley_terry"][seed] for seed in seeds]
-        hinge = [by_objective["hinge"][seed] for seed in seeds]
-        tests.append((dataset, *exact_wilcoxon(bt, hinge)))
-    adjusted = holm([test[1] for test in tests])
-    print("Image-caption same-image accuracy")
-    for (dataset, p_value, delta, nonzero), corrected in zip(tests, adjusted):
-        print(
-            f"  {dataset}, BT - hinge: mean difference={delta:+.6f}, "
-            f"Wilcoxon p={p_value:.6f}, Holm p={corrected:.6f}, n={nonzero}"
-        )
+def selected_seeds(rows: list[dict], representation: str, objective: str,
+                   n: int = 0, category: str | None = None,
+                   target: str | None = None, expected_tasks: int = 1) -> dict[int, float]:
+    selected = [r for r in rows if r["representation"] == representation
+                and r["objective"] == objective
+                and (objective == "regression" or int(float(r["N"])) == n)
+                and (category is None or r["category"] == category)
+                and (target is None or r["target"] == target)]
+    by_seed = defaultdict(list)
+    for row in selected:
+        by_seed[int(row["seed"])].append(float(row["spearman"]))
+    if set(by_seed) != set(range(10)) or any(len(v) != expected_tasks for v in by_seed.values()):
+        raise ValueError(f"Incomplete task/seed matrix for {representation}/{objective}/{n}")
+    return {seed: mean(values) for seed, values in by_seed.items()}
+
+
+def compute_tests(sidhu: list[dict], apdd: list[dict], ols: list[dict]) -> dict[str, list[dict]]:
+    rq1 = []
+    for category in ("abstract", "representational"):
+        for target in ("beauty", "liking"):
+            clip = selected_seeds(sidhu, "clip-vit-b32", "regression",
+                                  category=category, target=target)
+            resnet = selected_seeds(sidhu, "resnet50", "regression",
+                                    category=category, target=target)
+            label = f"Sidhu {category} {target}"
+            rq1.append(matched_test(label + ": CLIP - ResNet", clip, resnet))
+            baseline_rows = [r for r in ols if r["category"] == category
+                             and r["target"] == target and r["protocol"] == "training_median"]
+            if len(baseline_rows) != 10:
+                raise ValueError(f"Expected ten imputed OLS results for {label}")
+            baseline = {int(r["seed"]): float(r["spearman"]) for r in baseline_rows}
+            rq1.append(matched_test(label + ": CLIP - OLS", clip, baseline))
+    rq1.append(matched_test("APDDv2 macro: CLIP - ResNet",
+        selected_seeds(apdd, "clip-vit-b32", "regression", expected_tasks=11),
+        selected_seeds(apdd, "resnet50", "regression", expected_tasks=11)))
+    output = {"rq1_tests": correct_family(rq1), "rq2_focal_tests": [], "rq2_sweep_tests": []}
+    for dataset, rows, tasks in (("sidhu", sidhu, 4), ("apddv2", apdd, 11)):
+        regression = selected_seeds(rows, "clip-vit-b32", "regression", expected_tasks=tasks)
+        sweep = []
+        for n in range(1, 11):
+            hinge = selected_seeds(rows, "clip-vit-b32", "hinge", n, expected_tasks=tasks)
+            bt = selected_seeds(rows, "clip-vit-b32", "bradley_terry", n, expected_tasks=tasks)
+            contrasts = [("hinge - regression", hinge, regression),
+                         ("BT - regression", bt, regression), ("BT - hinge", bt, hinge)]
+            family = [dict(matched_test(label, left, right), dataset=dataset, N=n)
+                      for label, left, right in contrasts]
+            if n in (1, 10):
+                output["rq2_focal_tests"].extend(correct_family(family))
+            sweep.extend(dict(t) for t in family[:2])
+        output["rq2_sweep_tests"].extend(correct_family(sweep))
+    return output
+
+
+def write_csv(path: Path, rows: list[dict]) -> None:
+    with path.open("w", newline="", encoding="utf-8") as stream:
+        writer = csv.DictWriter(stream, fieldnames=list(rows[0]))
+        writer.writeheader()
+        writer.writerows(rows)
 
 
 def main() -> None:
-    sidhu_regression = read_rows(
-        "comparative_painting/results/extensions/locked_head/aggregate_merged/sidhu/"
-        "sidhu-*-clip-vit-b32.csv"
-    )
-    sidhu_regression = [
-        row for row in sidhu_regression if row["objective"] == "regression"
-    ]
-    sidhu_pairwise = read_rows(
-        "comparative_painting/results/extensions/locked_head/aggregate_merged/sidhu/"
-        "sidhu-*-clip-vit-b32-pairwise-v2.csv"
-    )
-    report_art("Art: Sidhu", sidhu_regression + sidhu_pairwise)
-    report_art(
-        "Art: APDDv2",
-        read_rows(
-            "comparative_painting/results/extensions/locked_head/aggregate_merged/apddv2/"
-            "apddv2-*-clip-vit-b32.csv"
-        ),
-    )
-    report_image()
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--results-root", type=Path, default=ROOT / "results/extensions")
+    parser.add_argument("--output-dir", type=Path, default=ROOT / "results/paper")
+    args = parser.parse_args()
+    merged = args.results_root / "locked_head/aggregate_merged"
+    def read_directory(path):
+        rows = []
+        for source in sorted(path.glob("*.csv")):
+            with source.open(newline="", encoding="utf-8") as stream:
+                rows.extend(csv.DictReader(stream))
+        return rows
+    ols_path = args.results_root / "heldout_ols/metrics.csv"
+    with ols_path.open(newline="", encoding="utf-8") as stream:
+        ols = list(csv.DictReader(stream))
+    output = compute_tests(read_directory(merged / "sidhu"),
+                           read_directory(merged / "apddv2"), ols)
+    args.output_dir.mkdir(parents=True, exist_ok=True)
+    for name, rows in output.items():
+        write_csv(args.output_dir / f"{name}.csv", rows)
+    print(f"Wrote {sum(map(len, output.values()))} tests in three CSVs to {args.output_dir}")
 
 
 if __name__ == "__main__":

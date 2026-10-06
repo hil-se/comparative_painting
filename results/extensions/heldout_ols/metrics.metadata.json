@@ -1,0 +1,59 @@
+{
+  "reconstructed_runner": true,
+  "predictors": [
+    "HueSD",
+    "Saturation",
+    "SaturationSD",
+    "Brightness",
+    "BrightnessSD",
+    "Entropy",
+    "StraightEdgeDensity",
+    "NonStraightEdgeDensity",
+    "Vertical_Symmetry",
+    "Horizontal_Symmetry",
+    "ColourComponent"
+  ],
+  "rows": 80,
+  "sha256": "a3a10de136bb8c1ea4811d61f111b464b50321069f51eb039ede756ef83984a3",
+  "source_sha256": {
+    "Data/Abstract_All_Raters.csv": "6eb85c7fbd07b567cd710d91838cd01a16e4b3aa7ccb156400fb51fb48abe857",
+    "Data/Abstract_Data.csv": "48e2e674b1523b7a34d84f6d8ace97d6747edff69c6ee40eb0984d53f2ddad56",
+    "Data/Abstract_Liking_All_Raters.csv": "3b594524df795edd4469136c15e86d7a351e00d23507f09e8152a2b619f7a764",
+    "Data/Representational_All_Raters.csv": "e21e5e13e5f2a2ca2f63b9e9393e6e4c653622c7390f337d8395e63c945ef28d",
+    "Data/Representational_Data.csv": "0ea42ee3d56ba4e70b6da01667f96b9abd90972f7c153f19fc1d85f05b1ee32d",
+    "Data/Representational_Liking_All_Raters.csv": "ec8a0f397617ef0976f8f39613169e111417eba97a5322f4419ba6b321aa4bc4"
+  },
+  "join_audit": {
+    "abstract": {
+      "verified_feature_rows": 236,
+      "maximum_brightness_saturation_error": 5.10702591327572e-15,
+      "paintings_with_missing_predictors": [
+        23,
+        121,
+        154,
+        161,
+        236
+      ]
+    },
+    "representational": {
+      "verified_feature_rows": 238,
+      "maximum_brightness_saturation_error": 1.7763568394002505e-15,
+      "paintings_with_missing_predictors": []
+    }
+  },
+  "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+  ],
+  "split": "140 training / 20 validation / remainder test",
+  "imputation": "feature median from assigned training paintings only",
+  "complete_case": "filter within assigned partitions; never reshuffle"
+}

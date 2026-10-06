@@ -1,0 +1,9 @@
+{
+  "dimensions": 2048,
+  "manifest": "/home/xx4455/paper-projects/artifacts/comparative_painting/manifests/apddv2.csv",
+  "model": "tf.keras.applications.ResNet50",
+  "representation": "resnet50",
+  "rows": 10022,
+  "sha256": "a1c21428c65605a47b54c9abdd642da4eda98517c45b385949a7f5481ed306a4",
+  "weights": "imagenet"
+}

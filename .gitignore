@@ -8,3 +8,7 @@ Results/regression_summary.txt
 Miscilleneous
 Code_1
 Data_1
+.venv/
+build/
+__pycache__/
+.pytest_cache/

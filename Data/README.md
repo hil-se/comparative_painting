@@ -6,9 +6,16 @@ This directory contains two categories of data used in the paper.
 
 | File | Description |
 |------|-------------|
-| `RIT-Human-Aesthetic-Judgment-Study_November-27-2025_14.58.csv` | Raw Qualtrics export from the human study (RQ4). Seven participants completed the survey; five were retained after excluding two for insufficient response variance. |
+| `RIT-Human-Aesthetic-Judgment-Study_November-27-2025_14.58.csv` | Raw Qualtrics export from the human study (RQ4). Seven finished entries include one preview. Six non-preview completions become five retained timing responses after the constant-response filter. |
 
 Analysis code for these data is in `../code/human_survey/`.
+
+`fixed_features/sidhu-clip-vit-b32.npz` is the recovered 477-row CLIP bundle
+used in the controlled runs. Its original metadata and SHA-256 are included;
+the historical cluster paths in that metadata describe its provenance.
+`provenance/` records the original APDDv2 feature hashes. APDDv2 images and
+feature arrays are obtained/prepared separately as described in
+`../docs/replication.md`.
 
 ## External Data (Sidhu et al., 2018)
 

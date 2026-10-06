@@ -1,0 +1,33 @@
+{
+  "locked_before_test": true,
+  "phase": "confirm",
+  "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+  ],
+  "selection_metric": "unweighted macro validation Spearman",
+  "validation_macro_spearman": 0.7771985807171014,
+  "winner_config": {
+    "activation": "gelu",
+    "architecture": "shallow",
+    "batch_size": 128,
+    "config_id": "shallow-mse-z-gelu-ln-rawclip",
+    "dropout": 0.1,
+    "feature_standardization": false,
+    "l2": 1e-05,
+    "learning_rate": 0.001,
+    "loss": "mse",
+    "normalization": "layer",
+    "reduce_lr": true,
+    "target_standardization": true
+  },
+  "winner_config_id": "shallow-mse-z-gelu-ln-rawclip"
+}

@@ -1,0 +1,15 @@
+name: Replication checks
+on: [push, pull_request]
+jobs:
+  analysis:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - run: pip install -r requirements-analysis.txt
+      - run: python -m unittest discover -s tests -v
+      - run: python code/extensions/run_sidhu_heldout_ols.py --output-dir build/heldout_ols
+      - run: python code/extensions/reproduce_art_paper.py --output-dir build/paper

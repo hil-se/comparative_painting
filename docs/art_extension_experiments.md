@@ -30,10 +30,19 @@ raters, and seeds.
 
 - Sidhu: 140 training examples, 20 validation examples, and the remainder for
   testing for each of the four category/target conditions.
-- APDDv2: deterministic 70/15/15 train/validation/test splits for all 11
+- APDDv2: 70/15/15 train/validation/test splits re-randomized per seed for all 11
   aggregate targets.
 - Pair budget: `N = M / n_train`; pairwise runs use `N=1` through `N=10`.
 - Repetitions: ten matched seeds.
+
+The implemented pair sampler shuffles the training paintings and, for each
+anchor painting, shuffles possible partners and accepts up to N unused,
+non-tied unordered pairs. It is not uniform sampling from the complete set
+of eligible pairs. Hinge and Bradley--Terry reuse the same deterministic pair
+set for each seed/budget. Every one of the 14,000 archived pairwise fits has
+exactly `N * train_examples` training pairs; the implementation can produce
+fewer if there are too few eligible unused partners. The original sampler is
+preserved so the archived experiments remain reproducible.
 
 The corrected Sidhu manifest joins ratings, images, and features by explicit
 item ID. It accounts for the three paintings omitted from the released

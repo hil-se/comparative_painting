@@ -1,0 +1,41 @@
+{
+  "source_files": 78,
+  "model_fit_rows": 14700,
+  "head_selection": {
+    "phases": {
+      "screen": {
+        "configurations": 22,
+        "fits": 726,
+        "seeds": [
+          0,
+          1,
+          2
+        ]
+      },
+      "confirm": {
+        "configurations": 3,
+        "fits": 330,
+        "seeds": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9
+        ]
+      }
+    },
+    "winner": "shallow-mse-z-gelu-ln-rawclip",
+    "validation_macro_spearman": 0.7771985807171014
+  },
+  "ols_fit_rows": 80,
+  "pairwise_fit_rows": 14000,
+  "pair_budget_shortfalls": 0,
+  "statistical_contrasts": 61,
+  "bands": "sample SD of ten seed-level macro averages; raters are averaged within seed",
+  "human_agreement": "regenerated from released survey data, rounded to two decimals per matrix entry"
+}
