@@ -1,0 +1,11 @@
+phase,method_id,dataset,representation,category,target,objective,N,seed,train_examples,validation_examples,test_examples,train_pairs,validation_pairs,epochs_trained,best_epoch,mae,r2,spearman
+locked_method_evaluation,shallow-mse-z-gelu-ln-rawclip,sidhu,clip-vit-b32,representational,beauty,regression,,0,140,20,78,0,0,25,3,1.359130620956421,-1.9403726846562805,0.6215387367265774
+locked_method_evaluation,shallow-mse-z-gelu-ln-rawclip,sidhu,clip-vit-b32,representational,beauty,regression,,1,140,20,78,0,0,50,30,0.4515135884284973,0.630173599147173,0.7856307301548797
+locked_method_evaluation,shallow-mse-z-gelu-ln-rawclip,sidhu,clip-vit-b32,representational,beauty,regression,,2,140,20,78,0,0,30,10,0.3799716830253601,0.6999012574793408,0.8331626049649119
+locked_method_evaluation,shallow-mse-z-gelu-ln-rawclip,sidhu,clip-vit-b32,representational,beauty,regression,,3,140,20,78,0,0,46,26,0.4543633460998535,0.6398648415472188,0.817508097092525
+locked_method_evaluation,shallow-mse-z-gelu-ln-rawclip,sidhu,clip-vit-b32,representational,beauty,regression,,4,140,20,78,0,0,31,11,0.5303678512573242,0.5058141834139982,0.702229645308546
+locked_method_evaluation,shallow-mse-z-gelu-ln-rawclip,sidhu,clip-vit-b32,representational,beauty,regression,,5,140,20,78,0,0,62,42,0.3584398031234741,0.747106740455721,0.8785318713342156
+locked_method_evaluation,shallow-mse-z-gelu-ln-rawclip,sidhu,clip-vit-b32,representational,beauty,regression,,6,140,20,78,0,0,50,30,0.4377667009830475,0.6187177622074898,0.7878182410070195
+locked_method_evaluation,shallow-mse-z-gelu-ln-rawclip,sidhu,clip-vit-b32,representational,beauty,regression,,7,140,20,78,0,0,25,2,0.8931979537010193,-0.8534714661538589,0.5469492068641406
+locked_method_evaluation,shallow-mse-z-gelu-ln-rawclip,sidhu,clip-vit-b32,representational,beauty,regression,,8,140,20,78,0,0,37,17,0.44532540440559387,0.5663584377045541,0.7707367730176049
+locked_method_evaluation,shallow-mse-z-gelu-ln-rawclip,sidhu,clip-vit-b32,representational,beauty,regression,,9,140,20,78,0,0,58,38,0.4292176067829132,0.5990309054016181,0.7937927310296344

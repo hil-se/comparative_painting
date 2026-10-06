@@ -1,0 +1,11 @@
+phase,method_id,dataset,representation,category,target,objective,N,seed,train_examples,validation_examples,test_examples,train_pairs,validation_pairs,epochs_trained,best_epoch,mae,r2,spearman
+locked_method_evaluation,shallow-mse-z-gelu-ln-rawclip,sidhu,resnet50,abstract,beauty,regression,,0,140,20,79,0,0,103,83,0.5757738947868347,0.5877221420044512,0.6541937796348548
+locked_method_evaluation,shallow-mse-z-gelu-ln-rawclip,sidhu,resnet50,abstract,beauty,regression,,1,140,20,79,0,0,43,23,0.6423758864402771,0.4315211620514745,0.6470316190886952
+locked_method_evaluation,shallow-mse-z-gelu-ln-rawclip,sidhu,resnet50,abstract,beauty,regression,,2,140,20,79,0,0,81,61,0.5930809378623962,0.3027853491389082,0.569098274947276
+locked_method_evaluation,shallow-mse-z-gelu-ln-rawclip,sidhu,resnet50,abstract,beauty,regression,,3,140,20,79,0,0,57,37,0.6296164393424988,0.3293708342820135,0.5381928008418978
+locked_method_evaluation,shallow-mse-z-gelu-ln-rawclip,sidhu,resnet50,abstract,beauty,regression,,4,140,20,79,0,0,49,29,0.62369304895401,0.502438037229826,0.6265529763310249
+locked_method_evaluation,shallow-mse-z-gelu-ln-rawclip,sidhu,resnet50,abstract,beauty,regression,,5,140,20,79,0,0,93,73,0.6138120889663696,0.3661836511099885,0.6304199681521672
+locked_method_evaluation,shallow-mse-z-gelu-ln-rawclip,sidhu,resnet50,abstract,beauty,regression,,6,140,20,79,0,0,35,15,0.5512050986289978,0.41941147233365317,0.5455530616779104
+locked_method_evaluation,shallow-mse-z-gelu-ln-rawclip,sidhu,resnet50,abstract,beauty,regression,,7,140,20,79,0,0,65,45,0.5739582180976868,0.5247791839102011,0.6294774716047838
+locked_method_evaluation,shallow-mse-z-gelu-ln-rawclip,sidhu,resnet50,abstract,beauty,regression,,8,140,20,79,0,0,65,45,0.6355555057525635,0.4773942652750848,0.5876323841467824
+locked_method_evaluation,shallow-mse-z-gelu-ln-rawclip,sidhu,resnet50,abstract,beauty,regression,,9,140,20,79,0,0,30,10,0.706969678401947,0.3397528834033152,0.5960427754540804

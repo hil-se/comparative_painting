@@ -1,0 +1,23 @@
+phase,dataset,representation,target,config_id,seed,train_examples,validation_examples,epochs_trained,best_epoch,validation_spearman,validation_mae
+screen,apddv2,clip-vit-b32,Space and perspective,deep-mae-current-spearstop,1,4343,931,59,39,0.7716392882923694,0.6251015067100525
+screen,apddv2,clip-vit-b32,Space and perspective,deep-mae-lr3e4-d25,1,4343,931,84,64,0.7743955876526406,0.5996984243392944
+screen,apddv2,clip-vit-b32,Space and perspective,deep-huber-lr1e3-d25,1,4343,931,60,40,0.778728364847708,0.6069528460502625
+screen,apddv2,clip-vit-b32,Space and perspective,deep-huber-lr3e4-d25,1,4343,931,84,64,0.7685279488760938,0.6115809082984924
+screen,apddv2,clip-vit-b32,Space and perspective,deep-mse-z-lr1e3-d25,1,4343,931,68,48,0.7781420473367318,0.6017878651618958
+screen,apddv2,clip-vit-b32,Space and perspective,deep-mse-z-lr3e4-d25,1,4343,931,69,49,0.7635371899998318,0.619250476360321
+screen,apddv2,clip-vit-b32,Space and perspective,deep-mae-z-d10-b128,1,4343,931,71,51,0.7801213264621221,0.5861667990684509
+screen,apddv2,clip-vit-b32,Space and perspective,deep-huber-z-d10-b128,1,4343,931,51,31,0.7714819961143435,0.6040815114974976
+screen,apddv2,clip-vit-b32,Space and perspective,deep-mse-z-d10-b128,1,4343,931,62,42,0.7737114935207594,0.5917672514915466
+screen,apddv2,clip-vit-b32,Space and perspective,shallow-mae-z-bn-d10,1,4343,931,42,22,0.7628687633383628,0.6237502098083496
+screen,apddv2,clip-vit-b32,Space and perspective,shallow-huber-z-bn-d10,1,4343,931,35,15,0.7427863321862863,0.6491836905479431
+screen,apddv2,clip-vit-b32,Space and perspective,shallow-mse-z-bn-d10,1,4343,931,54,34,0.7545835059187858,0.6097744107246399
+screen,apddv2,clip-vit-b32,Space and perspective,shallow-mse-z-ln-d10,1,4343,931,64,44,0.7616338527253278,0.6200356483459473
+screen,apddv2,clip-vit-b32,Space and perspective,shallow-huber-z-ln-d10,1,4343,931,64,44,0.768293591491041,0.6125034689903259
+screen,apddv2,clip-vit-b32,Space and perspective,shallow-mse-z-gelu-ln,1,4343,931,66,46,0.7690861155285519,0.620590329170227
+screen,apddv2,clip-vit-b32,Space and perspective,shallow-mse-z-gelu-ln-rawclip,1,4343,931,30,10,0.774142880035681,0.5887467265129089
+screen,apddv2,clip-vit-b32,Space and perspective,bottleneck-mse-z-ln,1,4343,931,27,7,0.7387873405538866,0.6878436803817749
+screen,apddv2,clip-vit-b32,Space and perspective,deep-mse-z-gelu-ln-d10,1,4343,931,124,104,0.7692858720565834,0.5952296853065491
+screen,apddv2,clip-vit-b32,Space and perspective,ridge-z-a1,1,4343,931,0,0,0.7582363104343025,0.6384499073028564
+screen,apddv2,clip-vit-b32,Space and perspective,ridge-z-a10,1,4343,931,0,0,0.7589661199534972,0.6363926529884338
+screen,apddv2,clip-vit-b32,Space and perspective,ridge-z-a100,1,4343,931,0,0,0.7624875513161142,0.6334049701690674
+screen,apddv2,clip-vit-b32,Space and perspective,ridge-z-a1-rawclip,1,4343,931,0,0,0.7674481358049158,0.6323491930961609

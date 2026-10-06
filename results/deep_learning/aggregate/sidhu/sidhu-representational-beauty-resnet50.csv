@@ -1,0 +1,11 @@
+phase,method_id,dataset,representation,category,target,objective,N,seed,train_examples,validation_examples,test_examples,train_pairs,validation_pairs,epochs_trained,best_epoch,mae,r2,spearman
+locked_method_evaluation,shallow-mse-z-gelu-ln-rawclip,sidhu,resnet50,representational,beauty,regression,,0,140,20,78,0,0,25,1,1.4773271083831787,-2.5338696330867987,0.42631036658764093
+locked_method_evaluation,shallow-mse-z-gelu-ln-rawclip,sidhu,resnet50,representational,beauty,regression,,1,140,20,78,0,0,43,23,0.6104463934898376,0.3054963220307798,0.6471105294596817
+locked_method_evaluation,shallow-mse-z-gelu-ln-rawclip,sidhu,resnet50,representational,beauty,regression,,2,140,20,78,0,0,57,37,0.5123673677444458,0.48824247569430246,0.6918212780915858
+locked_method_evaluation,shallow-mse-z-gelu-ln-rawclip,sidhu,resnet50,representational,beauty,regression,,3,140,20,78,0,0,120,100,0.5244865417480469,0.5283944696275449,0.7441951668173886
+locked_method_evaluation,shallow-mse-z-gelu-ln-rawclip,sidhu,resnet50,representational,beauty,regression,,4,140,20,78,0,0,25,3,0.6614559292793274,0.21146289741773183,0.6843090422144602
+locked_method_evaluation,shallow-mse-z-gelu-ln-rawclip,sidhu,resnet50,representational,beauty,regression,,5,140,20,78,0,0,25,1,1.4271526336669922,-2.1515086382648345,0.31113247581154735
+locked_method_evaluation,shallow-mse-z-gelu-ln-rawclip,sidhu,resnet50,representational,beauty,regression,,6,140,20,78,0,0,58,38,0.5310718417167664,0.44487645433430656,0.6575522697366749
+locked_method_evaluation,shallow-mse-z-gelu-ln-rawclip,sidhu,resnet50,representational,beauty,regression,,7,140,20,78,0,0,25,4,0.6765865087509155,-0.1952182054716749,0.668411971511936
+locked_method_evaluation,shallow-mse-z-gelu-ln-rawclip,sidhu,resnet50,representational,beauty,regression,,8,140,20,78,0,0,25,3,0.9787931442260742,-0.9005561777353577,0.1468852969565065
+locked_method_evaluation,shallow-mse-z-gelu-ln-rawclip,sidhu,resnet50,representational,beauty,regression,,9,140,20,78,0,0,56,36,0.5554879903793335,0.409073754860396,0.6483998109493866

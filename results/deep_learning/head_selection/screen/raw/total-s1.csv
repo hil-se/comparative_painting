@@ -1,0 +1,23 @@
+phase,dataset,representation,target,config_id,seed,train_examples,validation_examples,epochs_trained,best_epoch,validation_spearman,validation_mae
+screen,apddv2,clip-vit-b32,Total aesthetic score,deep-mae-current-spearstop,1,7015,1503,42,22,0.8232084761640864,6.476825714111328
+screen,apddv2,clip-vit-b32,Total aesthetic score,deep-mae-lr3e4-d25,1,7015,1503,144,124,0.8209429971011426,6.171812534332275
+screen,apddv2,clip-vit-b32,Total aesthetic score,deep-huber-lr1e3-d25,1,7015,1503,40,20,0.8229705442353118,6.4153852462768555
+screen,apddv2,clip-vit-b32,Total aesthetic score,deep-huber-lr3e4-d25,1,7015,1503,200,197,0.7960859364789017,12.733156204223633
+screen,apddv2,clip-vit-b32,Total aesthetic score,deep-mse-z-lr1e3-d25,1,7015,1503,46,26,0.8167023194471701,6.382590293884277
+screen,apddv2,clip-vit-b32,Total aesthetic score,deep-mse-z-lr3e4-d25,1,7015,1503,77,57,0.8132368567521132,6.408512592315674
+screen,apddv2,clip-vit-b32,Total aesthetic score,deep-mae-z-d10-b128,1,7015,1503,40,20,0.8241806351456967,6.333193778991699
+screen,apddv2,clip-vit-b32,Total aesthetic score,deep-huber-z-d10-b128,1,7015,1503,121,101,0.8269411188597104,6.118046283721924
+screen,apddv2,clip-vit-b32,Total aesthetic score,deep-mse-z-d10-b128,1,7015,1503,111,91,0.8229879808412779,6.201580047607422
+screen,apddv2,clip-vit-b32,Total aesthetic score,shallow-mae-z-bn-d10,1,7015,1503,44,24,0.8226707293622378,6.416725158691406
+screen,apddv2,clip-vit-b32,Total aesthetic score,shallow-huber-z-bn-d10,1,7015,1503,61,41,0.8172078219593134,6.385300159454346
+screen,apddv2,clip-vit-b32,Total aesthetic score,shallow-mse-z-bn-d10,1,7015,1503,57,37,0.811160246409124,6.546838760375977
+screen,apddv2,clip-vit-b32,Total aesthetic score,shallow-mse-z-ln-d10,1,7015,1503,125,105,0.8189522266073085,6.336416244506836
+screen,apddv2,clip-vit-b32,Total aesthetic score,shallow-huber-z-ln-d10,1,7015,1503,78,58,0.814474083446808,6.413453578948975
+screen,apddv2,clip-vit-b32,Total aesthetic score,shallow-mse-z-gelu-ln,1,7015,1503,82,62,0.813885982392558,6.376725673675537
+screen,apddv2,clip-vit-b32,Total aesthetic score,shallow-mse-z-gelu-ln-rawclip,1,7015,1503,27,7,0.8209622328622751,6.289003849029541
+screen,apddv2,clip-vit-b32,Total aesthetic score,bottleneck-mse-z-ln,1,7015,1503,39,19,0.8166536273803783,6.400827407836914
+screen,apddv2,clip-vit-b32,Total aesthetic score,deep-mse-z-gelu-ln-d10,1,7015,1503,98,78,0.8261477532882596,6.037909984588623
+screen,apddv2,clip-vit-b32,Total aesthetic score,ridge-z-a1,1,7015,1503,0,0,0.7908729140588596,6.958672523498535
+screen,apddv2,clip-vit-b32,Total aesthetic score,ridge-z-a10,1,7015,1503,0,0,0.7911850201317464,6.953406810760498
+screen,apddv2,clip-vit-b32,Total aesthetic score,ridge-z-a100,1,7015,1503,0,0,0.7926161895610968,6.914060115814209
+screen,apddv2,clip-vit-b32,Total aesthetic score,ridge-z-a1-rawclip,1,7015,1503,0,0,0.7955975715303595,6.870360851287842

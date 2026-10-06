@@ -1,0 +1,23 @@
+phase,dataset,representation,target,config_id,seed,train_examples,validation_examples,epochs_trained,best_epoch,validation_spearman,validation_mae
+screen,apddv2,clip-vit-b32,Light and shadow,deep-mae-current-spearstop,2,4343,931,72,52,0.7991175008199257,0.643221378326416
+screen,apddv2,clip-vit-b32,Light and shadow,deep-mae-lr3e4-d25,2,4343,931,105,85,0.7871792194283489,0.6290106177330017
+screen,apddv2,clip-vit-b32,Light and shadow,deep-huber-lr1e3-d25,2,4343,931,72,52,0.7936526160040756,0.607908308506012
+screen,apddv2,clip-vit-b32,Light and shadow,deep-huber-lr3e4-d25,2,4343,931,87,67,0.7783451521719417,0.6383606195449829
+screen,apddv2,clip-vit-b32,Light and shadow,deep-mse-z-lr1e3-d25,2,4343,931,103,83,0.7999934875105328,0.6046543717384338
+screen,apddv2,clip-vit-b32,Light and shadow,deep-mse-z-lr3e4-d25,2,4343,931,139,119,0.7925275143213524,0.6112862825393677
+screen,apddv2,clip-vit-b32,Light and shadow,deep-mae-z-d10-b128,2,4343,931,61,41,0.8014068278711972,0.592172384262085
+screen,apddv2,clip-vit-b32,Light and shadow,deep-huber-z-d10-b128,2,4343,931,83,63,0.8062390338321391,0.5895436406135559
+screen,apddv2,clip-vit-b32,Light and shadow,deep-mse-z-d10-b128,2,4343,931,113,93,0.7983571592512336,0.5943930149078369
+screen,apddv2,clip-vit-b32,Light and shadow,shallow-mae-z-bn-d10,2,4343,931,72,52,0.7886913324029511,0.6186473369598389
+screen,apddv2,clip-vit-b32,Light and shadow,shallow-huber-z-bn-d10,2,4343,931,41,21,0.7813666553090123,0.6643074154853821
+screen,apddv2,clip-vit-b32,Light and shadow,shallow-mse-z-bn-d10,2,4343,931,103,83,0.7779064818432934,0.6394413113594055
+screen,apddv2,clip-vit-b32,Light and shadow,shallow-mse-z-ln-d10,2,4343,931,166,146,0.7906805996055691,0.6214749217033386
+screen,apddv2,clip-vit-b32,Light and shadow,shallow-huber-z-ln-d10,2,4343,931,62,42,0.7973266566917186,0.641099214553833
+screen,apddv2,clip-vit-b32,Light and shadow,shallow-mse-z-gelu-ln,2,4343,931,166,146,0.7823963767338988,0.629348635673523
+screen,apddv2,clip-vit-b32,Light and shadow,shallow-mse-z-gelu-ln-rawclip,2,4343,931,32,12,0.7911620537937305,0.621835470199585
+screen,apddv2,clip-vit-b32,Light and shadow,bottleneck-mse-z-ln,2,4343,931,48,28,0.7927077183604739,0.6341977119445801
+screen,apddv2,clip-vit-b32,Light and shadow,deep-mse-z-gelu-ln-d10,2,4343,931,86,66,0.803161933230303,0.5997758507728577
+screen,apddv2,clip-vit-b32,Light and shadow,ridge-z-a1,2,4343,931,0,0,0.776296273238098,0.6525105237960815
+screen,apddv2,clip-vit-b32,Light and shadow,ridge-z-a10,2,4343,931,0,0,0.7768849577808441,0.6511114239692688
+screen,apddv2,clip-vit-b32,Light and shadow,ridge-z-a100,2,4343,931,0,0,0.7799566477894299,0.6449776291847229
+screen,apddv2,clip-vit-b32,Light and shadow,ridge-z-a1-rawclip,2,4343,931,0,0,0.7805043793909808,0.6480474472045898

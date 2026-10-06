@@ -1,2 +1,1 @@
-# Result sidecars hash exact CSV bytes, including original line endings.
-*.csv -text whitespace=cr-at-eol
+*.csv -text

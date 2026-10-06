@@ -1,0 +1,11 @@
+phase,method_id,dataset,representation,category,target,objective,N,seed,train_examples,validation_examples,test_examples,train_pairs,validation_pairs,epochs_trained,best_epoch,mae,r2,spearman
+locked_method_evaluation,shallow-mse-z-gelu-ln-rawclip,sidhu,resnet50,representational,liking,regression,,0,140,20,78,0,0,25,1,1.372489333152771,-1.8527634966530075,0.4004704750700167
+locked_method_evaluation,shallow-mse-z-gelu-ln-rawclip,sidhu,resnet50,representational,liking,regression,,1,140,20,78,0,0,56,36,0.5481135249137878,0.5245370033287862,0.7296504345411844
+locked_method_evaluation,shallow-mse-z-gelu-ln-rawclip,sidhu,resnet50,representational,liking,regression,,2,140,20,78,0,0,41,21,0.5917773246765137,0.394546123793421,0.7019179127574224
+locked_method_evaluation,shallow-mse-z-gelu-ln-rawclip,sidhu,resnet50,representational,liking,regression,,3,140,20,78,0,0,57,37,0.5763213634490967,0.4015194527492828,0.6464696318704201
+locked_method_evaluation,shallow-mse-z-gelu-ln-rawclip,sidhu,resnet50,representational,liking,regression,,4,140,20,78,0,0,25,1,2.044985294342041,-4.60998265987005,0.3263016799086157
+locked_method_evaluation,shallow-mse-z-gelu-ln-rawclip,sidhu,resnet50,representational,liking,regression,,5,140,20,78,0,0,60,40,0.5438456535339355,0.4902230462646582,0.7427519983568694
+locked_method_evaluation,shallow-mse-z-gelu-ln-rawclip,sidhu,resnet50,representational,liking,regression,,6,140,20,78,0,0,27,7,0.6982212066650391,0.2057300585774886,0.5728957276936258
+locked_method_evaluation,shallow-mse-z-gelu-ln-rawclip,sidhu,resnet50,representational,liking,regression,,7,140,20,78,0,0,30,10,0.5535752177238464,0.31741491771215014,0.671468231143143
+locked_method_evaluation,shallow-mse-z-gelu-ln-rawclip,sidhu,resnet50,representational,liking,regression,,8,140,20,78,0,0,25,2,0.7660095691680908,-0.02955689059565314,0.14928035008145096
+locked_method_evaluation,shallow-mse-z-gelu-ln-rawclip,sidhu,resnet50,representational,liking,regression,,9,140,20,78,0,0,46,26,0.5571430325508118,0.40182818368157514,0.6695459203145417

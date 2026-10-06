@@ -1,0 +1,23 @@
+phase,dataset,representation,target,config_id,seed,train_examples,validation_examples,epochs_trained,best_epoch,validation_spearman,validation_mae
+screen,apddv2,clip-vit-b32,Details and texture,deep-mae-current-spearstop,2,7015,1503,39,19,0.8151605637461968,0.6932063698768616
+screen,apddv2,clip-vit-b32,Details and texture,deep-mae-lr3e4-d25,2,7015,1503,69,49,0.8144883813587052,0.6444097757339478
+screen,apddv2,clip-vit-b32,Details and texture,deep-huber-lr1e3-d25,2,7015,1503,41,21,0.8123004212899111,0.6500469446182251
+screen,apddv2,clip-vit-b32,Details and texture,deep-huber-lr3e4-d25,2,7015,1503,65,45,0.8134324233008503,0.6472361087799072
+screen,apddv2,clip-vit-b32,Details and texture,deep-mse-z-lr1e3-d25,2,7015,1503,83,63,0.8159825992572998,0.6285240650177002
+screen,apddv2,clip-vit-b32,Details and texture,deep-mse-z-lr3e4-d25,2,7015,1503,72,52,0.8080641052944909,0.652779221534729
+screen,apddv2,clip-vit-b32,Details and texture,deep-mae-z-d10-b128,2,7015,1503,41,21,0.808214792801426,0.6476104855537415
+screen,apddv2,clip-vit-b32,Details and texture,deep-huber-z-d10-b128,2,7015,1503,93,73,0.8173845011263883,0.6257715821266174
+screen,apddv2,clip-vit-b32,Details and texture,deep-mse-z-d10-b128,2,7015,1503,40,20,0.8135037913592016,0.6882393956184387
+screen,apddv2,clip-vit-b32,Details and texture,shallow-mae-z-bn-d10,2,7015,1503,37,17,0.8149579482516941,0.651098906993866
+screen,apddv2,clip-vit-b32,Details and texture,shallow-huber-z-bn-d10,2,7015,1503,46,26,0.8004534139255624,0.6801877021789551
+screen,apddv2,clip-vit-b32,Details and texture,shallow-mse-z-bn-d10,2,7015,1503,122,102,0.8037297886932986,0.6638175249099731
+screen,apddv2,clip-vit-b32,Details and texture,shallow-mse-z-ln-d10,2,7015,1503,97,77,0.8022217355847778,0.6625518202781677
+screen,apddv2,clip-vit-b32,Details and texture,shallow-huber-z-ln-d10,2,7015,1503,63,43,0.8087610911404864,0.6530850529670715
+screen,apddv2,clip-vit-b32,Details and texture,shallow-mse-z-gelu-ln,2,7015,1503,67,47,0.8113373009172902,0.6494784355163574
+screen,apddv2,clip-vit-b32,Details and texture,shallow-mse-z-gelu-ln-rawclip,2,7015,1503,27,7,0.8182220346006234,0.6465396285057068
+screen,apddv2,clip-vit-b32,Details and texture,bottleneck-mse-z-ln,2,7015,1503,57,37,0.8092678216788418,0.6420519351959229
+screen,apddv2,clip-vit-b32,Details and texture,deep-mse-z-gelu-ln-d10,2,7015,1503,78,58,0.817907887511513,0.6313537359237671
+screen,apddv2,clip-vit-b32,Details and texture,ridge-z-a1,2,7015,1503,0,0,0.7926745960846823,0.685733437538147
+screen,apddv2,clip-vit-b32,Details and texture,ridge-z-a10,2,7015,1503,0,0,0.7930137835123081,0.6856024265289307
+screen,apddv2,clip-vit-b32,Details and texture,ridge-z-a100,2,7015,1503,0,0,0.7942476031034772,0.6839592456817627
+screen,apddv2,clip-vit-b32,Details and texture,ridge-z-a1-rawclip,2,7015,1503,0,0,0.798531491488824,0.6784375905990601

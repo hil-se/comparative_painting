@@ -1,0 +1,23 @@
+phase,dataset,representation,target,config_id,seed,train_examples,validation_examples,epochs_trained,best_epoch,validation_spearman,validation_mae
+screen,apddv2,clip-vit-b32,The overall,deep-mae-current-spearstop,0,7015,1503,48,28,0.7921782922649911,0.6278101801872253
+screen,apddv2,clip-vit-b32,The overall,deep-mae-lr3e4-d25,0,7015,1503,98,78,0.7929351307779098,0.6096161007881165
+screen,apddv2,clip-vit-b32,The overall,deep-huber-lr1e3-d25,0,7015,1503,59,39,0.7872404390062416,0.6240827441215515
+screen,apddv2,clip-vit-b32,The overall,deep-huber-lr3e4-d25,0,7015,1503,90,70,0.7940140419488007,0.6119439601898193
+screen,apddv2,clip-vit-b32,The overall,deep-mse-z-lr1e3-d25,0,7015,1503,40,20,0.7846136975071686,0.6330757141113281
+screen,apddv2,clip-vit-b32,The overall,deep-mse-z-lr3e4-d25,0,7015,1503,105,85,0.7790483822125792,0.6236500144004822
+screen,apddv2,clip-vit-b32,The overall,deep-mae-z-d10-b128,0,7015,1503,63,43,0.786301100476531,0.6139737963676453
+screen,apddv2,clip-vit-b32,The overall,deep-huber-z-d10-b128,0,7015,1503,37,17,0.7780854528640752,0.6456284523010254
+screen,apddv2,clip-vit-b32,The overall,deep-mse-z-d10-b128,0,7015,1503,41,21,0.7755386981010257,0.6474108099937439
+screen,apddv2,clip-vit-b32,The overall,shallow-mae-z-bn-d10,0,7015,1503,40,20,0.7744510630595595,0.6448403596878052
+screen,apddv2,clip-vit-b32,The overall,shallow-huber-z-bn-d10,0,7015,1503,48,28,0.7659626890343318,0.6605533361434937
+screen,apddv2,clip-vit-b32,The overall,shallow-mse-z-bn-d10,0,7015,1503,52,32,0.7615359949333378,0.6854695677757263
+screen,apddv2,clip-vit-b32,The overall,shallow-mse-z-ln-d10,0,7015,1503,45,25,0.7742262908554043,0.6433963775634766
+screen,apddv2,clip-vit-b32,The overall,shallow-huber-z-ln-d10,0,7015,1503,29,9,0.7674197774421563,0.6651973724365234
+screen,apddv2,clip-vit-b32,The overall,shallow-mse-z-gelu-ln,0,7015,1503,29,9,0.7615364687297586,0.6820712685585022
+screen,apddv2,clip-vit-b32,The overall,shallow-mse-z-gelu-ln-rawclip,0,7015,1503,27,7,0.7956656124783327,0.6056186556816101
+screen,apddv2,clip-vit-b32,The overall,bottleneck-mse-z-ln,0,7015,1503,108,88,0.7767628996570435,0.6291055083274841
+screen,apddv2,clip-vit-b32,The overall,deep-mse-z-gelu-ln-d10,0,7015,1503,100,80,0.7820825957049706,0.6138411164283752
+screen,apddv2,clip-vit-b32,The overall,ridge-z-a1,0,7015,1503,0,0,0.7663383760058358,0.6603010296821594
+screen,apddv2,clip-vit-b32,The overall,ridge-z-a10,0,7015,1503,0,0,0.7664151327938727,0.6601181030273438
+screen,apddv2,clip-vit-b32,The overall,ridge-z-a100,0,7015,1503,0,0,0.7664128999398456,0.658635675907135
+screen,apddv2,clip-vit-b32,The overall,ridge-z-a1-rawclip,0,7015,1503,0,0,0.7661129514476538,0.6592336893081665

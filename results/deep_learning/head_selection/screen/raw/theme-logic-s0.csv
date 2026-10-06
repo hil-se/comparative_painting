@@ -1,0 +1,23 @@
+phase,dataset,representation,target,config_id,seed,train_examples,validation_examples,epochs_trained,best_epoch,validation_spearman,validation_mae
+screen,apddv2,clip-vit-b32,Theme and logic,deep-mae-current-spearstop,0,5574,1194,38,18,0.7481971233819792,0.6696067452430725
+screen,apddv2,clip-vit-b32,Theme and logic,deep-mae-lr3e4-d25,0,5574,1194,86,66,0.7501113032282922,0.6186481714248657
+screen,apddv2,clip-vit-b32,Theme and logic,deep-huber-lr1e3-d25,0,5574,1194,36,16,0.7501434919610627,0.6711118221282959
+screen,apddv2,clip-vit-b32,Theme and logic,deep-huber-lr3e4-d25,0,5574,1194,86,66,0.7428361114992722,0.6250762939453125
+screen,apddv2,clip-vit-b32,Theme and logic,deep-mse-z-lr1e3-d25,0,5574,1194,67,47,0.7484281853766092,0.6296262741088867
+screen,apddv2,clip-vit-b32,Theme and logic,deep-mse-z-lr3e4-d25,0,5574,1194,114,94,0.7450997580440817,0.6315906643867493
+screen,apddv2,clip-vit-b32,Theme and logic,deep-mae-z-d10-b128,0,5574,1194,35,15,0.7425413248618925,0.6546167731285095
+screen,apddv2,clip-vit-b32,Theme and logic,deep-huber-z-d10-b128,0,5574,1194,95,75,0.7487675341788839,0.6278706789016724
+screen,apddv2,clip-vit-b32,Theme and logic,deep-mse-z-d10-b128,0,5574,1194,53,33,0.7464866086431758,0.6423239707946777
+screen,apddv2,clip-vit-b32,Theme and logic,shallow-mae-z-bn-d10,0,5574,1194,28,8,0.7267359674125788,0.6449448466300964
+screen,apddv2,clip-vit-b32,Theme and logic,shallow-huber-z-bn-d10,0,5574,1194,27,7,0.7285396719039398,0.6612488627433777
+screen,apddv2,clip-vit-b32,Theme and logic,shallow-mse-z-bn-d10,0,5574,1194,27,7,0.7296459998489574,0.6540393233299255
+screen,apddv2,clip-vit-b32,Theme and logic,shallow-mse-z-ln-d10,0,5574,1194,33,13,0.7306759511278783,0.6634621620178223
+screen,apddv2,clip-vit-b32,Theme and logic,shallow-huber-z-ln-d10,0,5574,1194,25,4,0.7316701983694834,0.6551094651222229
+screen,apddv2,clip-vit-b32,Theme and logic,shallow-mse-z-gelu-ln,0,5574,1194,40,20,0.7403869238554583,0.6728847026824951
+screen,apddv2,clip-vit-b32,Theme and logic,shallow-mse-z-gelu-ln-rawclip,0,5574,1194,26,6,0.753760069387935,0.6399948000907898
+screen,apddv2,clip-vit-b32,Theme and logic,bottleneck-mse-z-ln,0,5574,1194,31,11,0.7528191860176093,0.6447179317474365
+screen,apddv2,clip-vit-b32,Theme and logic,deep-mse-z-gelu-ln-d10,0,5574,1194,80,60,0.7503663464238922,0.6291943192481995
+screen,apddv2,clip-vit-b32,Theme and logic,ridge-z-a1,0,5574,1194,0,0,0.7214794374331943,0.6535657048225403
+screen,apddv2,clip-vit-b32,Theme and logic,ridge-z-a10,0,5574,1194,0,0,0.7230022102168165,0.6513622999191284
+screen,apddv2,clip-vit-b32,Theme and logic,ridge-z-a100,0,5574,1194,0,0,0.7291040601678833,0.6437829732894897
+screen,apddv2,clip-vit-b32,Theme and logic,ridge-z-a1-rawclip,0,5574,1194,0,0,0.7372700724769975,0.6332723498344421

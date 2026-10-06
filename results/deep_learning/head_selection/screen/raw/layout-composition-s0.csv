@@ -1,0 +1,23 @@
+phase,dataset,representation,target,config_id,seed,train_examples,validation_examples,epochs_trained,best_epoch,validation_spearman,validation_mae
+screen,apddv2,clip-vit-b32,Layout and composition,deep-mae-current-spearstop,0,7015,1503,55,35,0.783472989931573,0.6652517318725586
+screen,apddv2,clip-vit-b32,Layout and composition,deep-mae-lr3e4-d25,0,7015,1503,64,44,0.781113785351939,0.6218267679214478
+screen,apddv2,clip-vit-b32,Layout and composition,deep-huber-lr1e3-d25,0,7015,1503,41,21,0.7771353085622099,0.6360044479370117
+screen,apddv2,clip-vit-b32,Layout and composition,deep-huber-lr3e4-d25,0,7015,1503,55,35,0.7859323223617734,0.6254265308380127
+screen,apddv2,clip-vit-b32,Layout and composition,deep-mse-z-lr1e3-d25,0,7015,1503,40,20,0.7821222716626541,0.6243414282798767
+screen,apddv2,clip-vit-b32,Layout and composition,deep-mse-z-lr3e4-d25,0,7015,1503,75,55,0.7767214458369779,0.6193755865097046
+screen,apddv2,clip-vit-b32,Layout and composition,deep-mae-z-d10-b128,0,7015,1503,44,24,0.7824354301957827,0.6372162699699402
+screen,apddv2,clip-vit-b32,Layout and composition,deep-huber-z-d10-b128,0,7015,1503,47,27,0.7777514883819249,0.6542769074440002
+screen,apddv2,clip-vit-b32,Layout and composition,deep-mse-z-d10-b128,0,7015,1503,60,40,0.7792425511188391,0.6136235594749451
+screen,apddv2,clip-vit-b32,Layout and composition,shallow-mae-z-bn-d10,0,7015,1503,69,49,0.7723354319355723,0.6279899477958679
+screen,apddv2,clip-vit-b32,Layout and composition,shallow-huber-z-bn-d10,0,7015,1503,44,24,0.7648416288902651,0.6817020177841187
+screen,apddv2,clip-vit-b32,Layout and composition,shallow-mse-z-bn-d10,0,7015,1503,63,43,0.760342802320724,0.6426682472229004
+screen,apddv2,clip-vit-b32,Layout and composition,shallow-mse-z-ln-d10,0,7015,1503,112,92,0.7724231808185269,0.6217381358146667
+screen,apddv2,clip-vit-b32,Layout and composition,shallow-huber-z-ln-d10,0,7015,1503,33,13,0.7615965785287988,0.6513268351554871
+screen,apddv2,clip-vit-b32,Layout and composition,shallow-mse-z-gelu-ln,0,7015,1503,121,101,0.7694545021352808,0.6226828694343567
+screen,apddv2,clip-vit-b32,Layout and composition,shallow-mse-z-gelu-ln-rawclip,0,7015,1503,27,7,0.7977039568197535,0.600394606590271
+screen,apddv2,clip-vit-b32,Layout and composition,bottleneck-mse-z-ln,0,7015,1503,38,18,0.7695503021205641,0.639814555644989
+screen,apddv2,clip-vit-b32,Layout and composition,deep-mse-z-gelu-ln-d10,0,7015,1503,127,107,0.7819998008539785,0.6003280878067017
+screen,apddv2,clip-vit-b32,Layout and composition,ridge-z-a1,0,7015,1503,0,0,0.7742893658754632,0.6447767019271851
+screen,apddv2,clip-vit-b32,Layout and composition,ridge-z-a10,0,7015,1503,0,0,0.7742518117437848,0.6445229053497314
+screen,apddv2,clip-vit-b32,Layout and composition,ridge-z-a100,0,7015,1503,0,0,0.7741432491525047,0.6430232524871826
+screen,apddv2,clip-vit-b32,Layout and composition,ridge-z-a1-rawclip,0,7015,1503,0,0,0.7755554733173413,0.6392881274223328

@@ -1,7 +1,10 @@
+"""Compute the paper's direct-rating and comparative accuracy matrices."""
+
+import argparse
+import itertools
+from pathlib import Path
 import numpy as np
 import pandas as pd
-from collections import Counter
-import os
 
 
 def generate_pairs_absolute(x1, x2):
@@ -9,14 +12,16 @@ def generate_pairs_absolute(x1, x2):
     n = len(x1)
     pairs = {"A": [], "B": [], "agree": []}
     for i in range(n):
-        for j in range(i+1, n):
+        for j in range(i + 1, n):
             d1 = d2 = 0
-            if x1[i] > x1[j]: d1 = 1
-            elif x1[i] < x1[j]: d1 = -1
-            
-            if x2[i] > x2[j]: d2 = 1
-            elif x2[i] < x2[j]: d2 = -1
-            
+            if x1[i] > x1[j]:
+                d1 = 1
+            elif x1[i] < x1[j]:
+                d1 = -1
+            if x2[i] > x2[j]:
+                d2 = 1
+            elif x2[i] < x2[j]:
+                d2 = -1
             if d1 != 0 and d2 != 0:
                 pairs["A"].append(d1)
                 pairs["B"].append(d2)
@@ -29,197 +34,99 @@ def generate_pairs_comparative(x1, x2):
     n = len(x1)
     pairs = {"A": [], "B": [], "agree": []}
     for i in range(n):
-        if x1.iloc[i] not in ('A', 'B') or x2.iloc[i] not in ('A', 'B'):
+        if x1.iloc[i] not in ("A", "B") or x2.iloc[i] not in ("A", "B"):
             continue
-        choice1 = 1 if x1.iloc[i] == 'A' else -1
-        choice2 = 1 if x2.iloc[i] == 'A' else -1
+        choice1 = 1 if x1.iloc[i] == "A" else -1
+        choice2 = 1 if x2.iloc[i] == "A" else -1
         pairs["A"].append(choice1)
         pairs["B"].append(choice2)
         pairs["agree"].append(choice1 == choice2)
     return pairs
 
 
-def acc_kappa(pairs):
-    """Calculate accuracy and Cohen's kappa"""
-    n = len(pairs["agree"])
-    if n == 0:
-        return 0, 0
-    
-    acc = np.sum(pairs["agree"]) / n
-    count_A = Counter(pairs["A"])
-    count_B = Counter(pairs["B"])
-    pe = n**(-2) * (count_A[1]*count_B[1] + count_A[-1]*count_B[-1])
-    
-    if pe == 1:
-        kappa = 1.0
-    else:
-        kappa = (acc - pe) / (1 - pe)
-    
-    return acc, kappa
-
-
 def create_gt_comparative_column(df):
     """Create a GT column for comparative data"""
-    candidates = [('GT_A', 'GT_B'), ('GT_A_Beauty', 'GT_B_Beauty'),
-                  ('GT_A_Liking', 'GT_B_Liking')]
+    candidates = [
+        ("GT_A", "GT_B"),
+        ("GT_A_Beauty", "GT_B_Beauty"),
+        ("GT_A_Liking", "GT_B_Liking"),
+    ]
     available = [(a, b) for a, b in candidates if a in df.columns and b in df.columns]
-    if len(available) != 1:
-        raise ValueError('Expected exactly one pair of comparative GT score columns')
     column_a, column_b = available[0]
+
     def compare_gt(row):
-        if row[column_a] > row[column_b]: return 'A'
-        elif row[column_b] > row[column_a]: return 'B'
-        else: return None
-    
-    df['GT'] = df.apply(compare_gt, axis=1)
+        if row[column_a] > row[column_b]:
+            return "A"
+        elif row[column_b] > row[column_a]:
+            return "B"
+        else:
+            return None
+
+    df["GT"] = df.apply(compare_gt, axis=1)
     return df
 
 
-def analyze_ratings(input_file, output_file, summary_file, rating_type='absolute', raters=None):
-    """
-    Analyze inter-rater agreement AND calculate summaries in a single pass.
-    """
-    df = pd.read_csv(input_file)
-    
-    # Pre-processing for comparative GT
-    if rating_type == 'comparative' and any(c.startswith('GT_A') for c in df.columns):
-        df = create_gt_comparative_column(df)
-        df = df[df['GT'].notna()]
-    
-    # Set default raters
-    if raters is None:
-        if rating_type == 'absolute':
-            raters = ["GT", "P1", "P2", "P3", "P4", "P5", "P6"]
+def analyze_ratings(
+    input_file, output_file, summary_file, rating_type="absolute", raters=None
+):
+    data = pd.read_csv(input_file)
+    if rating_type == "comparative":
+        data = create_gt_comparative_column(data)
+    raters = ["GT", "P1", "P3", "P4", "P5", "P6"] if raters is None else raters
+    rows = []
+    scores = {rater: [] for rater in raters}
+    generate = (
+        generate_pairs_absolute
+        if rating_type == "absolute"
+        else generate_pairs_comparative
+    )
+    for left, right in itertools.combinations(raters, 2):
+        accuracy = float(np.mean(generate(data[left], data[right])["agree"]))
+        rows.append({"Pair": f"{left}/{right}", "Acc": f"{accuracy:.2f}"})
+        if left == "GT":
+            scores[left].append(accuracy)
+        elif right == "GT":
+            scores[right].append(accuracy)
         else:
-            raters = ["GT", "P1", "P2", "P3", "P4", "P5", "P6"] if 'GT' in df.columns else ["P1", "P2", "P3", "P4", "P5", "P6"]
-
-    # Initialize containers
-    pair_results = []
-    # Dictionary to hold running totals: { 'P1': {'acc': 0, 'kappa': 0, 'count': 0}, ... }
-    rater_stats = {r: {'acc': 0.0, 'kappa': 0.0, 'count': 0} for r in raters}
-
-    # --- SINGLE PASS LOOP (DRY Implementation) ---
-    for i in range(len(raters)):
-        for j in range(i+1, len(raters)):
-            r1, r2 = raters[i], raters[j]
-            
-            # Skip missing columns
-            if r1 not in df.columns or r2 not in df.columns:
-                continue
-                
-            # 1. Generate Pairs
-            if rating_type == 'absolute':
-                pairs = generate_pairs_absolute(df[r1], df[r2])
-            else:
-                pairs = generate_pairs_comparative(df[r1], df[r2])
-            
-            # 2. Calculate Metrics
-            acc, kappa = acc_kappa(pairs)
-            
-            # 3. Store Pairwise Result
-            pair_results.append({
-                "Pair": f"{r1}/{r2}", 
-                "Acc": f"{acc:.2f}", 
-                "Kappa": f"{kappa:.2f}"
-            })
-
-            # 4. Accumulate Summary Stats (The "Separate GT" Logic)
-            # Logic: If one rater is GT, only GT tracks the stats. 
-            #        If both are humans, both track the stats.
-            
-            # Handle Rater 1
-            if r1 == 'GT':
-                rater_stats[r1]['acc'] += acc
-                rater_stats[r1]['kappa'] += kappa
-                rater_stats[r1]['count'] += 1
-                # Do NOT add to r2 (Human) stats because r1 is GT
-            elif r2 == 'GT':
-                # This case shouldn't theoretically happen if GT is index 0, but good for safety
-                rater_stats[r2]['acc'] += acc
-                rater_stats[r2]['kappa'] += kappa
-                rater_stats[r2]['count'] += 1
-                # Do NOT add to r1 (Human) stats
-            else:
-                # Both are humans
-                rater_stats[r1]['acc'] += acc
-                rater_stats[r1]['kappa'] += kappa
-                rater_stats[r1]['count'] += 1
-                
-                rater_stats[r2]['acc'] += acc
-                rater_stats[r2]['kappa'] += kappa
-                rater_stats[r2]['count'] += 1
-
-    # --- SAVE OUTPUTS ---
-    
-    # 1. Save Pairwise Results
-    pd.DataFrame(pair_results).to_csv(output_file, index=False)
-    
-    # 2. Calculate and Save Summaries
-    summary_data = []
-    for rater, stats in sorted(rater_stats.items()):
-        if stats['count'] > 0:
-            summary_data.append({
-                'Rater': rater,
-                'Avg_Acc': f"{stats['acc'] / stats['count']:.3f}",
-                'Avg_Kappa': f"{stats['kappa'] / stats['count']:.3f}",
-                'Num_Pairs': stats['count']
-            })
-            
-    summary_df = pd.DataFrame(summary_data)
-    summary_df.to_csv(summary_file, index=False)
-    
-    print(f"\n{rating_type.upper()} processed.")
-    print(f"Pairs saved to: {output_file}")
-    print(f"Summary saved to: {summary_file}")
-    
-    return summary_df
+            scores[left].append(accuracy)
+            scores[right].append(accuracy)
+    output_file = Path(output_file)
+    output_file.parent.mkdir(parents=True, exist_ok=True)
+    pd.DataFrame(rows).to_csv(output_file, index=False)
+    pd.DataFrame(
+        [
+            {"Rater": rater, "Avg_Acc": f"{np.mean(values):.3f}"}
+            for rater, values in scores.items()
+        ]
+    ).to_csv(summary_file, index=False)
 
 
-# ============================================================================
-# MAIN EXECUTION
-# ============================================================================
+def main():
+    root = Path(__file__).resolve().parents[2]
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--input-dir", type=Path, default=root / "results/human_survey/survey_data"
+    )
+    parser.add_argument(
+        "--output-dir",
+        type=Path,
+        default=root / "results/human_survey/paper/rq4_matrices",
+    )
+    args = parser.parse_args()
+    for condition in (
+        "Abstract_Beauty",
+        "Abstract_Liking",
+        "Repr_Beauty",
+        "Repr_Liking",
+    ):
+        for method in ("Absolute", "Comparative"):
+            analyze_ratings(
+                args.input_dir / f"{condition}_{method}.csv",
+                args.output_dir / f"Agreement_{condition}_{method}.csv",
+                args.output_dir / f"Summary_{condition}_{method}.csv",
+                rating_type="absolute" if method == "Absolute" else "comparative",
+            )
+
 
 if __name__ == "__main__":
-    
-    SURVEY_DATA = "../../results/human_survey/survey_data"
-    AGREE_ABS = "../../results/human_survey/agreement/absolute"
-    AGREE_SUM = "../../results/human_survey/agreement/summary"
-    os.makedirs(AGREE_ABS, exist_ok=True)
-    os.makedirs(AGREE_SUM, exist_ok=True)
-
-    analyses = [
-        # Absolute
-        {'type': 'absolute', 'input': f'{SURVEY_DATA}/Abstract_Beauty_Absolute.csv', 'name': 'Abstract Beauty (Abs)'},
-        {'type': 'absolute', 'input': f'{SURVEY_DATA}/Abstract_Liking_Absolute.csv', 'name': 'Abstract Liking (Abs)'},
-        {'type': 'absolute', 'input': f'{SURVEY_DATA}/Repr_Beauty_Absolute.csv', 'name': 'Repr Beauty (Abs)'},
-        {'type': 'absolute', 'input': f'{SURVEY_DATA}/Repr_Liking_Absolute.csv', 'name': 'Repr Liking (Abs)'},
-        # Comparative
-        {'type': 'comparative', 'input': f'{SURVEY_DATA}/Abstract_Beauty_Comparative.csv', 'name': 'Abstract Beauty (Comp)'},
-        {'type': 'comparative', 'input': f'{SURVEY_DATA}/Abstract_Liking_Comparative.csv', 'name': 'Abstract Liking (Comp)'},
-        {'type': 'comparative', 'input': f'{SURVEY_DATA}/Repr_Beauty_Comparative.csv', 'name': 'Repr Beauty (Comp)'},
-        {'type': 'comparative', 'input': f'{SURVEY_DATA}/Repr_Liking_Comparative.csv', 'name': 'Repr Liking (Comp)'}
-    ]
-    
-    print("="*80)
-    print("INTER-RATER AGREEMENT ANALYSIS (Single Pass)")
-    print("="*80)
-    
-    for task in analyses:
-        # Construct filenames dynamically
-        base_name = os.path.basename(task['input']).replace('.csv', '')
-        out_pair = f"{AGREE_ABS}/Agreement_{base_name}.csv"
-        out_sum = f"{AGREE_SUM}/Summary_{base_name}.csv"
-        
-        try:
-            analyze_ratings(
-                input_file=task['input'],
-                output_file=out_pair,
-                summary_file=out_sum,
-                rating_type=task['type']
-            )
-        except Exception as e:
-            print(f"Error processing {task['name']}: {e}")
-            
-    print("\n" + "="*80)
-    print("ALL ANALYSES COMPLETE")
-    print("="*80)
+    main()

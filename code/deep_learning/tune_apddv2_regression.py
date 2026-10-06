@@ -1,28 +1,18 @@
-"""Validation-safe APDDv2 CLIP regression tuning and locked test evaluation.
-
-The ``screen`` and ``confirm`` phases never pass test features or labels to a
-model or metric. The ``test`` phase accepts exactly one previously locked
-configuration and is intended to run only after validation-based selection.
-"""
+"""Select the shared prediction head using APDDv2 validation Spearman."""
 
 from __future__ import annotations
-
 import argparse
 import csv
 import gc
-import hashlib
 import json
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable
-
 import numpy as np
-from scipy.stats import pearsonr, spearmanr
+from scipy.stats import spearmanr
 from sklearn.linear_model import Ridge
-from sklearn.metrics import mean_absolute_error, mean_squared_error
-
-from run_art_extensions import load_dataset, seed_everything, split_indices
-
+from sklearn.metrics import mean_absolute_error
+from art_utils import load_dataset, parse_range, seed_everything, split_indices
 
 APDD_TARGETS = (
     "Total aesthetic score",
@@ -44,11 +34,11 @@ class RegressionConfig:
     config_id: str
     architecture: str
     loss: str = "mse"
-    learning_rate: float = 1e-3
+    learning_rate: float = 0.001
     activation: str = "relu"
     normalization: str = "batch"
     dropout: float = 0.1
-    l2: float = 1e-5
+    l2: float = 1e-05
     batch_size: int = 128
     target_standardization: bool = True
     feature_standardization: bool = True
@@ -69,7 +59,7 @@ CONFIGS = (
         "deep-mae-lr3e4-d25",
         "deep",
         loss="mae",
-        learning_rate=3e-4,
+        learning_rate=0.0003,
         dropout=0.25,
         batch_size=256,
         target_standardization=False,
@@ -86,50 +76,31 @@ CONFIGS = (
         "deep-huber-lr3e4-d25",
         "deep",
         loss="huber",
-        learning_rate=3e-4,
+        learning_rate=0.0003,
         dropout=0.25,
         batch_size=256,
         target_standardization=False,
     ),
-    RegressionConfig(
-        "deep-mse-z-lr1e3-d25",
-        "deep",
-        dropout=0.25,
-        batch_size=256,
-    ),
+    RegressionConfig("deep-mse-z-lr1e3-d25", "deep", dropout=0.25, batch_size=256),
     RegressionConfig(
         "deep-mse-z-lr3e4-d25",
         "deep",
-        learning_rate=3e-4,
+        learning_rate=0.0003,
         dropout=0.25,
         batch_size=256,
     ),
     RegressionConfig("deep-mae-z-d10-b128", "deep", loss="mae"),
     RegressionConfig("deep-huber-z-d10-b128", "deep", loss="huber"),
     RegressionConfig("deep-mse-z-d10-b128", "deep"),
-    RegressionConfig(
-        "shallow-mae-z-bn-d10", "shallow", loss="mae"
-    ),
-    RegressionConfig(
-        "shallow-huber-z-bn-d10", "shallow", loss="huber"
-    ),
+    RegressionConfig("shallow-mae-z-bn-d10", "shallow", loss="mae"),
+    RegressionConfig("shallow-huber-z-bn-d10", "shallow", loss="huber"),
     RegressionConfig("shallow-mse-z-bn-d10", "shallow"),
+    RegressionConfig("shallow-mse-z-ln-d10", "shallow", normalization="layer"),
     RegressionConfig(
-        "shallow-mse-z-ln-d10",
-        "shallow",
-        normalization="layer",
+        "shallow-huber-z-ln-d10", "shallow", loss="huber", normalization="layer"
     ),
     RegressionConfig(
-        "shallow-huber-z-ln-d10",
-        "shallow",
-        loss="huber",
-        normalization="layer",
-    ),
-    RegressionConfig(
-        "shallow-mse-z-gelu-ln",
-        "shallow",
-        activation="gelu",
-        normalization="layer",
+        "shallow-mse-z-gelu-ln", "shallow", activation="gelu", normalization="layer"
     ),
     RegressionConfig(
         "shallow-mse-z-gelu-ln-rawclip",
@@ -138,16 +109,9 @@ CONFIGS = (
         normalization="layer",
         feature_standardization=False,
     ),
+    RegressionConfig("bottleneck-mse-z-ln", "bottleneck", normalization="layer"),
     RegressionConfig(
-        "bottleneck-mse-z-ln",
-        "bottleneck",
-        normalization="layer",
-    ),
-    RegressionConfig(
-        "deep-mse-z-gelu-ln-d10",
-        "deep",
-        activation="gelu",
-        normalization="layer",
+        "deep-mse-z-gelu-ln-d10", "deep", activation="gelu", normalization="layer"
     ),
     RegressionConfig(
         "ridge-z-a1",
@@ -186,69 +150,33 @@ CONFIGS = (
 CONFIG_BY_ID = {config.config_id: config for config in CONFIGS}
 
 
-def parse_range(value: str) -> list[int]:
-    values: list[int] = []
-    for part in value.split(","):
-        if "-" in part:
-            start, end = (int(piece) for piece in part.split("-", 1))
-            values.extend(range(start, end + 1))
-        else:
-            values.append(int(part))
-    return values
-
-
-def selected_config_ids(args: argparse.Namespace) -> list[str]:
+def selected_config_ids(args):
     if args.config_ids_file:
-        payload = json.loads(args.config_ids_file.read_text(encoding="utf-8"))
-        if "selected_config_ids" in payload:
-            ids = payload["selected_config_ids"]
-        elif "winner_config_id" in payload:
-            ids = [payload["winner_config_id"]]
-        else:
-            raise ValueError(
-                "Selection JSON needs selected_config_ids or winner_config_id"
-            )
-    elif args.config_ids:
-        ids = args.config_ids.split(",")
-    else:
-        ids = [config.config_id for config in CONFIGS]
-
-    unknown = sorted(set(ids) - set(CONFIG_BY_ID))
-    if unknown:
-        raise ValueError(f"Unknown configuration IDs: {unknown}")
-    if len(ids) != len(set(ids)):
-        raise ValueError("Configuration IDs must be unique")
-    if args.phase == "test" and len(ids) != 1:
-        raise ValueError("The locked test phase requires exactly one config")
-    return ids
+        return json.loads(args.config_ids_file.read_text())["selected_config_ids"]
+    if args.config_ids:
+        return args.config_ids.split(",")
+    return [config.config_id for config in CONFIGS]
 
 
 def scale_features(
-    train: np.ndarray,
-    validation: np.ndarray,
-    test: np.ndarray | None,
-    enabled: bool,
+    train: np.ndarray, validation: np.ndarray, test: np.ndarray | None, enabled: bool
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray | None]:
     if not enabled:
-        return train, validation, test
+        return (train, validation, test)
     mean = train.mean(axis=0)
     scale = train.std(axis=0)
     scale[scale == 0] = 1.0
     train_scaled = ((train - mean) / scale).astype(np.float32)
     validation_scaled = ((validation - mean) / scale).astype(np.float32)
-    test_scaled = (
-        None
-        if test is None
-        else ((test - mean) / scale).astype(np.float32)
-    )
-    return train_scaled, validation_scaled, test_scaled
+    test_scaled = None if test is None else ((test - mean) / scale).astype(np.float32)
+    return (train_scaled, validation_scaled, test_scaled)
 
 
 def scale_targets(
     train: np.ndarray, validation: np.ndarray, enabled: bool
 ) -> tuple[np.ndarray, np.ndarray, float, float]:
     if not enabled:
-        return train, validation, 0.0, 1.0
+        return (train, validation, 0.0, 1.0)
     mean = float(train.mean())
     scale = float(train.std())
     if scale == 0:
@@ -261,24 +189,10 @@ def scale_targets(
     )
 
 
-def correlation(y_true: np.ndarray, y_pred: np.ndarray, kind: str) -> float:
-    if kind == "spearman":
-        value = spearmanr(y_true, y_pred).statistic
-    elif kind == "pearson":
-        value = pearsonr(y_true, y_pred).statistic
-    else:
-        raise ValueError(kind)
-    return float(value)
-
-
-def regression_metrics(
-    y_true: np.ndarray, y_pred: np.ndarray, prefix: str
-) -> dict[str, float]:
+def regression_metrics(y_true, y_pred, prefix):
     return {
-        f"{prefix}_spearman": correlation(y_true, y_pred, "spearman"),
-        f"{prefix}_pearson": correlation(y_true, y_pred, "pearson"),
+        f"{prefix}_spearman": float(spearmanr(y_true, y_pred).statistic),
         f"{prefix}_mae": float(mean_absolute_error(y_true, y_pred)),
-        f"{prefix}_mse": float(mean_squared_error(y_true, y_pred)),
     }
 
 
@@ -299,17 +213,13 @@ def build_model(input_dim: int, config: RegressionConfig):
         )
         layers.append(
             tf.keras.layers.Dense(
-                units,
-                activation=config.activation,
-                kernel_regularizer=regularizer,
+                units, activation=config.activation, kernel_regularizer=regularizer
             )
         )
         if config.normalization == "batch":
             layers.append(tf.keras.layers.BatchNormalization())
         elif config.normalization == "layer":
             layers.append(tf.keras.layers.LayerNormalization())
-        elif config.normalization != "none":
-            raise ValueError(config.normalization)
         if config.dropout and index < len(hidden_sizes) - 1:
             layers.append(tf.keras.layers.Dropout(config.dropout))
     layers.append(tf.keras.layers.Dense(1, activation="linear"))
@@ -325,7 +235,6 @@ def keras_loss(config: RegressionConfig):
         return tf.keras.losses.MeanSquaredError()
     if config.loss == "huber":
         return tf.keras.losses.Huber(delta=1.0)
-    raise ValueError(config.loss)
 
 
 def make_spearman_stopper(
@@ -337,6 +246,7 @@ def make_spearman_stopper(
     import tensorflow as tf
 
     class SpearmanEarlyStopping(tf.keras.callbacks.Callback):
+
         def __init__(self) -> None:
             super().__init__()
             self.best = -np.inf
@@ -349,11 +259,9 @@ def make_spearman_stopper(
             prediction = np.asarray(
                 self.model(validation_features, training=False)
             ).ravel()
-            score = correlation(
-                validation_targets, prediction, kind="spearman"
-            )
+            score = float(spearmanr(validation_targets, prediction).statistic)
             logs["val_spearman"] = score
-            if np.isfinite(score) and score > self.best + 1e-4:
+            if np.isfinite(score) and score > self.best + 0.0001:
                 self.best = score
                 self.best_epoch = epoch + 1
                 self.best_weights = self.model.get_weights()
@@ -364,8 +272,6 @@ def make_spearman_stopper(
                 self.model.stop_training = True
 
         def on_train_end(self, logs=None) -> None:
-            if self.best_weights is None:
-                raise RuntimeError("No finite validation Spearman was observed")
             self.model.set_weights(self.best_weights)
 
     return SpearmanEarlyStopping()
@@ -382,13 +288,8 @@ def fit_predict(
     patience: int,
 ) -> tuple[np.ndarray, np.ndarray | None, int, int]:
     fit_train_targets, fit_validation_targets, target_mean, target_scale = (
-        scale_targets(
-            train_targets,
-            validation_targets,
-            config.target_standardization,
-        )
+        scale_targets(train_targets, validation_targets, config.target_standardization)
     )
-
     if config.architecture == "ridge":
         model = Ridge(alpha=config.l2)
         model.fit(train_features, fit_train_targets)
@@ -402,9 +303,7 @@ def fit_predict(
 
         model = build_model(train_features.shape[1], config)
         model.compile(
-            optimizer=tf.keras.optimizers.Adam(
-                learning_rate=config.learning_rate
-            ),
+            optimizer=tf.keras.optimizers.Adam(learning_rate=config.learning_rate),
             loss=keras_loss(config),
             jit_compile=False,
         )
@@ -422,8 +321,8 @@ def fit_predict(
                     mode="max",
                     factor=0.5,
                     patience=max(4, patience // 2),
-                    min_delta=1e-4,
-                    min_lr=1e-6,
+                    min_delta=0.0001,
+                    min_lr=1e-06,
                     verbose=0,
                 )
             )
@@ -448,7 +347,6 @@ def fit_predict(
         best_epoch = stopper.best_epoch
         del history, stopper
         tf.keras.backend.clear_session()
-
     validation_prediction = (
         np.asarray(validation_prediction).ravel() * target_scale + target_mean
     )
@@ -458,7 +356,7 @@ def fit_predict(
         )
     del model
     gc.collect()
-    return validation_prediction, test_prediction, epochs_trained, best_epoch
+    return (validation_prediction, test_prediction, epochs_trained, best_epoch)
 
 
 def run(
@@ -473,30 +371,21 @@ def run(
 ) -> list[dict[str, object]]:
     data = load_dataset(manifest, feature_file, target)
     rows: list[dict[str, object]] = []
-
     for seed in seeds:
         train_indices, validation_indices, heldout_indices = split_indices(
             len(data.ratings), "apddv2", seed
         )
         raw_train = data.features[train_indices]
         raw_validation = data.features[validation_indices]
-        raw_test = (
-            data.features[heldout_indices] if phase == "test" else None
-        )
+        raw_test = None
         train_targets = data.ratings[train_indices]
         validation_targets = data.ratings[validation_indices]
-
-        feature_views: dict[
-            bool, tuple[np.ndarray, np.ndarray, np.ndarray | None]
-        ] = {}
+        feature_views: dict[bool, tuple[np.ndarray, np.ndarray, np.ndarray | None]] = {}
         for config_id in config_ids:
             config = CONFIG_BY_ID[config_id]
             if config.feature_standardization not in feature_views:
                 feature_views[config.feature_standardization] = scale_features(
-                    raw_train,
-                    raw_validation,
-                    raw_test,
-                    config.feature_standardization,
+                    raw_train, raw_validation, raw_test, config.feature_standardization
                 )
             train_features, validation_features, test_features = feature_views[
                 config.feature_standardization
@@ -527,19 +416,6 @@ def run(
                     validation_targets, validation_prediction, "validation"
                 ),
             }
-            if phase == "test":
-                if test_prediction is None:
-                    raise AssertionError("Locked test prediction is missing")
-                row.update(
-                    {
-                        "test_examples": len(heldout_indices),
-                        **regression_metrics(
-                            data.ratings[heldout_indices],
-                            test_prediction,
-                            "test",
-                        ),
-                    }
-                )
             rows.append(row)
             print(json.dumps(row, sort_keys=True), flush=True)
     return rows
@@ -547,7 +423,7 @@ def run(
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--phase", choices=("screen", "confirm", "test"), required=True)
+    parser.add_argument("--phase", choices=("screen", "confirm"), required=True)
     parser.add_argument("--manifest", type=Path, required=True)
     parser.add_argument("--features", type=Path, required=True)
     parser.add_argument("--target", choices=APDD_TARGETS, required=True)
@@ -562,8 +438,6 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
-    if args.config_ids and args.config_ids_file:
-        raise ValueError("Use only one config selection argument")
     config_ids = selected_config_ids(args)
     seeds = parse_range(args.seeds)
     rows = run(
@@ -576,33 +450,11 @@ def main() -> None:
         epochs=args.epochs,
         patience=args.patience,
     )
-
     args.output.parent.mkdir(parents=True, exist_ok=True)
     with args.output.open("w", newline="", encoding="utf-8") as stream:
         writer = csv.DictWriter(stream, fieldnames=list(rows[0]))
         writer.writeheader()
         writer.writerows(rows)
-    metadata = {
-        "phase": args.phase,
-        "test_access": args.phase == "test",
-        "selection_metric": "unweighted macro validation Spearman",
-        "target": args.target,
-        "config_ids": config_ids,
-        "configs": [asdict(CONFIG_BY_ID[value]) for value in config_ids],
-        "seeds": seeds,
-        "rows": len(rows),
-        "epochs": args.epochs,
-        "patience": args.patience,
-        "split": "70% train / 15% validation / 15% held-out test",
-        "manifest_sha256": hashlib.sha256(args.manifest.read_bytes()).hexdigest(),
-        "features_sha256": hashlib.sha256(args.features.read_bytes()).hexdigest(),
-        "output_sha256": hashlib.sha256(args.output.read_bytes()).hexdigest(),
-    }
-    args.output.with_suffix(".metadata.json").write_text(
-        json.dumps(metadata, indent=2, sort_keys=True) + "\n",
-        encoding="utf-8",
-    )
-    print(json.dumps(metadata, indent=2, sort_keys=True), flush=True)
 
 
 if __name__ == "__main__":
