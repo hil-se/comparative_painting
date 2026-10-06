@@ -1,2 +1,2 @@
-# Result metadata records byte-level SHA-256 digests; preserve generated CSV bytes.
-results/extensions/locked_head/**/*.csv -text
+# Result sidecars hash exact CSV bytes, including original line endings.
+*.csv -text
